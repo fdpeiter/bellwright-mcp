@@ -6,7 +6,7 @@ export async function render(context) {
  root.append(el('section',{className:'panel',id:'observations'},el('h2',{},'Automatic extractor observations'),notice('Production capture unavailable'),el('p',{},readiness.reason),el('ul',{},readiness.missing.map(text=>el('li',{},text))),link('Inspect extractor evidence','plan',Object.fromEntries(context.params)),el('p',{className:'muted'},'MCP must record measured quantities and worker time automatically. There is no manual measurement form.')));
  const holder=el('section',{className:'panel'},el('h2',{},'Saved observations'));root.append(holder);
  if(!hasTool(tools,'list_save_snapshots')){holder.append(empty('Snapshot history unavailable','The MCP tool is not currently discovered.',link('Check source health','workspace')));return root;}
- async function refresh(refresh=false){holder.setAttribute('aria-busy','true');const result=await loadTool('list_save_snapshots',{}, {refresh});holder.replaceChildren(el('h2',{},'Saved observations'),button('Refresh saved evidence',()=>refresh(true)));
+ async function refresh(forceRefresh=false){holder.setAttribute('aria-busy','true');const result=await loadTool('list_save_snapshots',{}, {refresh:forceRefresh});holder.replaceChildren(el('h2',{},'Saved observations'),button('Refresh saved evidence',()=>refresh(true)));
   if(result.status==='error'){holder.append(notice(result.error||'History unavailable','error'));holder.removeAttribute('aria-busy');return;}
   if(result.status==='stale')holder.append(notice('Showing cached snapshots. Refresh failed: '+(result.error||'source stale')));
   const snapshots=result.data?.snapshots??[];
