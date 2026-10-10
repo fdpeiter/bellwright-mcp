@@ -60,7 +60,13 @@ func TestCapabilityIntegrationSchemas(t *testing.T) {
 		"search_saved_villagers": {"guid": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "limit": 1},
 		"locate_saved_inventory": {"item": "Iron_C", "limit": 1},
 		"inspect_saved_squads":   {"limit": 1}, "read_saved_village_progress": {"limit": 1},
-		"read_connection_health": {},
+		"read_connection_health":      {},
+		"rank_saved_workers":          {"skill": "craft", "limit": 1},
+		"audit_saved_job_priorities":  {"limit": 1},
+		"read_saved_housing":          {"limit": 1},
+		"compare_saved_stock_targets": {"targets": map[string]any{"Iron_C": 5}, "scope": "stored", "limit": 1},
+		"search_observed_items":       {"query": "iron", "limit": 1},
+		"summarize_resource_coverage": {"limit": 1},
 	}
 	list, err := cs.ListTools(ctx, nil)
 	if err != nil {

@@ -37,7 +37,10 @@ const args={
  read_gear_plan:{limit:1},read_item_history:{item_id:'Iron_C',limit:2},
  search_saved_villagers:{guid:'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',limit:1},
  locate_saved_inventory:{item:'Iron_C',limit:1},inspect_saved_squads:{limit:1,member_limit:2},
- read_saved_village_progress:{limit:1},read_connection_health:{}
+ read_saved_village_progress:{limit:1},read_connection_health:{},
+ rank_saved_workers:{skill:'craft',limit:1},audit_saved_job_priorities:{limit:1},
+ read_saved_housing:{limit:1},compare_saved_stock_targets:{targets:{Iron_C:5},scope:'stored',limit:1},
+ search_observed_items:{query:'iron',limit:1},summarize_resource_coverage:{limit:1}
 };
 try{
  const init=await call('initialize',{protocolVersion:'2025-06-18',capabilities:{},clientInfo:{name:'capability-smoke',version:'1'}});
@@ -55,9 +58,14 @@ try{
   if(tool.name==='inspect_saved_squads'){assert.equal(out.groups[0].members[1].resolution,'unmatched');assert.equal(out.groups[0].members[1].equipment,null)}
   if(tool.name==='read_live_map')assert.equal(out.data.status.stale,true);
   if(tool.name==='read_connection_health'){assert.equal(out.sources[1].availability,'no_data');assert.equal(out.sources[2].freshness,'stale')}
+  if(tool.name==='rank_saved_workers'){assert.equal(out.items[0].score,4);assert.equal(out.items[0].rank,1)}
+  if(tool.name==='read_saved_housing'){assert.equal(out.capacity_deficit,1);assert.equal(out.unknown_housing,1)}
+  if(tool.name==='compare_saved_stock_targets'){assert.equal(out.items[0].quantity,3);assert.equal(out.items[0].deficit,2)}
+  if(tool.name==='search_observed_items'){assert.equal(out.items[0].item_class,'Iron_C');assert.equal(out.items[0].official_label,null)}
+  if(tool.name==='summarize_resource_coverage'){assert.equal(out.total_nodes,3);assert.equal(out.categories[0].nodes,2);assert.equal(out.categories[0].bounds.min_z,-1);assert.equal(out.truncated,1)}
   console.log(tool.name+': stdio OK');
  }
- for(const name of ['read_resource_baseline','read_foraging_candidates','read_gear_plan','read_item_history','search_saved_villagers','locate_saved_inventory','inspect_saved_squads','read_saved_village_progress']){
+ for(const name of ['read_resource_baseline','read_foraging_candidates','read_gear_plan','read_item_history','search_saved_villagers','locate_saved_inventory','inspect_saved_squads','read_saved_village_progress','rank_saved_workers','audit_saved_job_priorities','read_saved_housing','compare_saved_stock_targets','search_observed_items','summarize_resource_coverage']){
   const bad=await call('tools/call',{name,arguments:{...args[name],limit:0}});
   assert.ok(bad.error||bad.result?.isError,name+': invalid limit accepted');
  }
@@ -67,6 +75,6 @@ try{
  const health=await call('tools/call',{name:'read_connection_health',arguments:{}});
  assert.ok(!health.result.isError);assert.ok(health.result.structuredContent.sources.every(s=>s.availability==='unavailable'&&s.freshness==='unknown'));
  child.stdin.end();assert.equal(await exited,0);
- console.log('14 tools, invalid limits, stale/null evidence, independent outages and EOF: PASS');
+ console.log(Object.keys(args).length+' tools, invalid limits, stale/null evidence, independent outages and EOF: PASS');
 }catch(error){console.error(error);process.exitCode=1;child.kill()}
 finally{clearTimeout(deadline);child.stdin.destroy();backend.closeAllConnections();await new Promise(resolve=>backend.close(resolve))}
