@@ -20,15 +20,31 @@ export const GET = async (req: Request) => {
     SELECT id,
            playtime_seconds AS playtime,
            ingested_at AS ingested_at,
+           save_name,
+           region,
+           json_extract(world, '$.meta.character') AS character,
+           json_extract(world, '$.meta.map') AS map,
            json_extract(world, ${jsonPath}) AS qty
     FROM snapshots
     ORDER BY id ASC
-  `) as { id: number; playtime: number | null; ingested_at: string; qty: number | null }[];
+  `) as {
+    id: number; playtime: number | null; ingested_at: string; qty: number | null;
+    save_name: string | null; region: string | null; character: string | null; map: string | null;
+  }[];
 
   const stride = Math.max(1, Math.ceil(rows.length / MAX_POINTS));
   const points = rows
     .filter((_, i) => i % stride === 0 || i === rows.length - 1)
-    .map(r => ({ playtime: r.playtime ?? 0, ingested_at: r.ingested_at, qty: r.qty ?? 0 }));
+    .map(r => ({
+      snapshot_id: r.id, ingested_at: r.ingested_at,
+      // Keep the chart's numeric fields compatible; MCP uses the nullable observations.
+      playtime: r.playtime ?? 0, qty: r.qty ?? 0,
+      observed_playtime: r.playtime, observed_qty: r.qty,
+      save_name: r.save_name, region: r.region, character: r.character, map: r.map,
+    }));
 
-  return Response.json({ name, points }, { headers: { 'cache-control': 'no-store' } });
+  return Response.json({
+    name, points, total_snapshots: rows.length, sampled_points: points.length,
+    stride, sampled: points.length < rows.length,
+  }, { headers: { 'cache-control': 'no-store' } });
 };

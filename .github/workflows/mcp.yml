@@ -18,6 +18,11 @@ jobs:
       - run: go test ./...
       - run: go vet ./...
       - run: go build ./...
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: go build -o bellwright-mcp .
+      - run: node capability-smoke.mjs ./bellwright-mcp
   docker:
     runs-on: ubuntu-latest
     steps:
