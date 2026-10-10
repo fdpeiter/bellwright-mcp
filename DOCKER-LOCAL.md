@@ -13,19 +13,21 @@ Copy `.env.example` to `.env` and replace all four directories. Use literal abso
 | `MAP_ASSETS_DIR` | `exports/Karvenia_08_map_overlay.png`, `exports/Karvenia_08_companion.png`, `karvenia-background.json` | Lawful extraction and calibration |
 | `RESOURCE_ANALYSIS_DIR` | `resource-baseline.json`, `foraging-placement-candidates.json` | Private packaged-node baseline and runtime placement analysis |
 
-Compose mounts these directories read-only and refuses to create missing host directories. Preflight checks presence; service endpoints validate contents. An empty save directory reports `WAITING_FOR_SAVE`, not missing infrastructure. Do not create a dummy log to make checks pass.
+Compose mounts these directories read-only and requests `create_host_path: false`. Docker Desktop accepted a nonexistent source in the negative test despite that flag, so use the startup wrapper below: it checks host files before any Docker action. Preflight checks presence; service endpoints validate contents. An empty save directory reports `WAITING_FOR_SAVE`, not missing infrastructure. Do not create a dummy log to make checks pass.
 
 ```powershell
 Copy-Item .env.example .env
 # Edit .env, then:
 pwsh -File scripts/preflight.ps1 -SkipDocker
 docker compose config --quiet
-docker compose up -d --build companion live-map publisher
+pwsh -File scripts/start-local.ps1
 docker compose build mcp
 pwsh -File scripts/preflight.ps1
 ```
 
 Open [the dashboard](http://127.0.0.1:8710). Publisher polls your read-only save directory every 15 seconds. A compatible save is required; startup alone does not establish successful ingestion. Connect using `mcp-go/mcp-config.example.json`, which runs `docker compose run --rm --no-deps -T mcp` per connection. Project `bellwright`, volume `companion-data` and upstream client identifier are preserved.
+
+`start-local.ps1` validates inputs/configuration, builds/starts companion, then recreates live-map and publisher against its current network namespace. It checks endpoints up to three times for startup readiness. Use `-NoBuild` with already-built images. It deliberately leaves companion/data running if a dependent check fails. Unlike read-only preflight, this command changes the deployment and starts save publishing. Run it from the checkout intended for deployment. Missing inputs return exit 1 before Docker is contacted.
 
 ## Interpret preflight
 
@@ -34,7 +36,7 @@ The script does not start/stop the game or containers, ingest saves or write inp
 - `MISSING_INPUT`: directory/file absent or inaccessible; fix inputs.
 - `GAME_INACTIVE`: no Windows Bellwright process detected, independently of file presence. `GAME_RUNNING` proves only process presence.
 - `DOCKER_UNAVAILABLE` / `COMPOSE_INVALID`: fix Docker Desktop/configuration.
-- `SERVICE_UNAVAILABLE` / `SERVICE_ERROR`: container/network or content failure; inspect logs privately.
+- `SERVICE_UNAVAILABLE` / `SERVICE_ERROR` / `SERVICE_INVALID_RESPONSE`: connection, HTTP or response-shape failure respectively; inspect logs privately.
 - `PROBE_UNAVAILABLE`: endpoint works but has no accepted protocol 0.3 records; check deployment/log location.
 - `FEED_STALE`: source timestamp older than 10 seconds; game may be inactive or probe stopped. Log modification time is not freshness evidence.
 - `WAITING_FOR_PLAYER`: fresh heartbeat, no loaded player; main menu is not gameplay.
@@ -89,3 +91,13 @@ Follow [map calibration](docs/MAP-BACKGROUND.md) for the companion's projection.
 Consult `mcp-go/internal/livemap/resources.go` and tests for baseline/placement validation. Baseline has `schema: "bellwright.harvestable-baseline.v1"`, `source_kind: "packaged_game_asset"`, nodes with unique `id`, `baseline_category`, `class_asset_path`, three-number `position`, and nonempty `unknowns`. Placements are an array of `bellwright.foraging-placement-candidate.v1` entries with runtime target identity, assumed radius, current/practical sites and assumptions; `[]` truthfully means no placement evidence. Never fabricate identities or label packaged nodes as measured harvest availability. The full packaged-node extractor is absent; valid owner-generated inputs remain a prerequisite, not a solved extraction pipeline.
 
 Keep saves/logs/databases/mappings/packages and extracted images/JSON outside Git and Docker build contexts. Ignored `private/`, `map-assets/`, `resource-analysis/`, `saves/`, `logs/` are local-data conventions; never force-add inputs. Review staged filenames before committing. `.env.example` contains placeholders only. Synthetic checks cannot prove actual extraction, producer compatibility or a fresh gameplay session.
+
+## Setup regression checks
+
+```powershell
+pwsh -File scripts/preflight.tests.ps1
+node --test scripts/check-services.test.mjs
+pwsh -File scripts/preflight-compose.tests.ps1
+```
+
+The last check needs Docker CLI/Compose. It resolves an isolated synthetic owner configuration and verifies missing inputs stop the startup gate without deploying containers. Node tests verify classifications and that private bodies/errors are suppressed; PowerShell fixtures test presence/path parsing, not real asset content.

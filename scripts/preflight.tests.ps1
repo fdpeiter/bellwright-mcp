@@ -37,7 +37,9 @@ try {
     Check $envPath 0 @('[INPUTS_PRESENT]', '[WAITING_FOR_SAVE]', '[DOCKER_UNCHECKED]')
     $env:SAVE_DIR = 'relative/path'
     Check $envPath 1 @('SAVE_DIR must be a literal absolute host directory')
-    Write-Output 'PASS: absent configuration, missing log, complete quoted paths, empty saves, environment precedence.'
+    $env:SAVE_DIR = 'C:drive-relative'
+    Check $envPath 1 @('SAVE_DIR must be a literal absolute host directory')
+    Write-Output 'PASS: absent configuration, missing log, complete quoted paths, empty saves, environment precedence, drive-relative path rejection.'
 } finally {
     foreach ($key in $keys) { [Environment]::SetEnvironmentVariable($key, $previous[$key]) }
     $resolved = [IO.Path]::GetFullPath($fixture)

@@ -63,7 +63,7 @@ so far (NPCs, skills, equipment, injuries, squads, storage, appearance, …).
 ## Quickstart
 
 For this fork's local Docker/live-map stack, use [the private-input setup guide](DOCKER-LOCAL.md)
-and `pwsh -File scripts/preflight.ps1`. The upstream image below runs the upstream dashboard;
+and `pwsh -File scripts/start-local.ps1`. The upstream image below runs the upstream dashboard;
 it does not deploy Steward's live probe or private map/resource inputs.
 
 ### 1. Run the server (anywhere with Docker)
