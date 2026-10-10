@@ -17,11 +17,14 @@ try {
     $json = & docker @baseArgs config --format json 2>$null
     if ($LASTEXITCODE -ne 0) { throw 'Synthetic owner Compose config failed.' }
     $config = $json | ConvertFrom-Json
+    # Some Compose versions omit false booleans from JSON serialization.
+    $source = Get-Content -LiteralPath (Join-Path $repo 'compose.yaml') -Raw
+    if ([regex]::Matches($source, 'create_host_path:\s*false').Count -ne 5) { throw 'Expected five explicit host-creation guards.' }
     $count = 0
     foreach ($service in $config.services.PSObject.Properties.Value) {
         foreach ($mount in $service.volumes) {
             if ($mount.target -in @('/map-assets', '/game', '/assets', '/resources', '/saves')) {
-                if (!$mount.read_only -or $mount.bind.create_host_path -ne $false) { throw 'Private bind safety flags lost.' }
+                if (!$mount.read_only -or $mount.bind.create_host_path -eq $true) { throw 'Private bind safety flags lost.' }
                 $count++
             }
         }
