@@ -13,11 +13,26 @@ web/.data/
 publisher/dist/
 web/public/portraits/
 private/
+# Local extraction/capture conventions (prefer directories outside the repository)
+map-assets/
+resource-analysis/
+saves/
+logs/
+*.pak
+*.utoc
+*.ucas
+*.uasset
+*.uexp
+*.ubulk
+*.usmap
 web/public/map/
 
 mcp-go/*.exe
 
 .env
+.env.*
+!.env.example
+!**/.env.example
 live-service.tmp
 
 .local-qa/

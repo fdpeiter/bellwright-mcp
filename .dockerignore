@@ -13,6 +13,17 @@ payload.bin
 Dockerfile
 .dockerignore
 private
+map-assets
+resource-analysis
+saves
+logs
+**/*.pak
+**/*.utoc
+**/*.ucas
+**/*.uasset
+**/*.uexp
+**/*.ubulk
+**/*.usmap
 
 .env
 .env.*
