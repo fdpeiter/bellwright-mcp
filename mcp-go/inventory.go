@@ -8,7 +8,7 @@ import (
 )
 
 type inventoryQuery struct {
-	Item        string `json:"item,omitempty"`
+	Item        string `json:"item"`
 	ContainerID string `json:"container_id,omitempty"`
 	Faction     string `json:"faction,omitempty"`
 	Limit       *int   `json:"limit,omitempty"`
@@ -31,7 +31,7 @@ type inventoryOutput struct {
 }
 
 func registerInventoryTools(s *mcp.Server, b *backend) {
-	mcp.AddTool(s, &mcp.Tool{Name: "locate_saved_inventory", Description: "Locate exact saved item class and/or container ID. Optional exact faction filter. Returns bounded containers with saved quantities and positions; aggregate storage, NPC-carried and equipped scopes stay separate. Unknown ownership and position remain unknown. Limit defaults 25, maximum 100.", Annotations: &mcp.ToolAnnotations{ReadOnlyHint: true}}, b.inventory)
+	mcp.AddTool(s, &mcp.Tool{Name: "locate_saved_inventory", Description: "Locate a required exact saved item class, optionally within one exact container ID. Optional exact faction filter. Returns bounded containers with saved quantities and positions; aggregate storage, NPC-carried and equipped scopes stay separate. Unknown ownership and position remain unknown. Limit defaults 25, maximum 100.", Annotations: &mcp.ToolAnnotations{ReadOnlyHint: true}}, b.inventory)
 }
 func inventoryQuantities(m map[string]float64, item string) (map[string]float64, error) {
 	if m == nil {
@@ -50,6 +50,9 @@ func inventoryQuantities(m map[string]float64, item string) (map[string]float64,
 }
 func (b *backend) inventory(ctx context.Context, _ *mcp.CallToolRequest, q inventoryQuery) (*mcp.CallToolResult, inventoryOutput, error) {
 	out := inventoryOutput{}
+	if q.Item == "" {
+		return nil, out, fmt.Errorf("item must be an exact nonempty saved item class")
+	}
 	limit := 25
 	if q.Limit != nil {
 		limit = *q.Limit
@@ -154,7 +157,14 @@ func (b *backend) inventory(ctx context.Context, _ *mcp.CallToolRequest, q inven
 		}
 		out.Matched++
 		if len(out.Containers) < limit {
-			out.Containers = append(out.Containers, c)
+			record := map[string]any{}
+			for _, key := range []string{"id", "name", "cls", "faction", "position"} {
+				if value, exists := c[key]; exists {
+					record[key] = value
+				}
+			}
+			record["items"] = map[string]any{q.Item: items[q.Item]}
+			out.Containers = append(out.Containers, record)
 		}
 	}
 	out.Returned = len(out.Containers)

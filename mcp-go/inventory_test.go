@@ -24,25 +24,25 @@ func TestInventory(t *testing.T) {
 	if e != nil || out.Total != 2 || out.Matched != 1 || out.Storage["iron"] != 3 || out.NPCCarried["iron"] != 2 || out.Equipped["iron"] != 1 || out.Containers[0]["faction"] != nil {
 		t.Fatalf("%+v %v", out, e)
 	}
-	_, out, e = b.inventory(context.Background(), nil, inventoryQuery{Faction: "Player"})
+	_, out, e = b.inventory(context.Background(), nil, inventoryQuery{Item: "iron", Faction: "Player"})
 	if e != nil || out.Matched != 0 || out.Storage["iron"] != 3 {
 		t.Fatalf("%+v %v", out, e)
 	}
 	limit := 0
 	before := calls
-	_, _, e = b.inventory(context.Background(), nil, inventoryQuery{Limit: &limit})
+	_, _, e = b.inventory(context.Background(), nil, inventoryQuery{Item: "iron", Limit: &limit})
 	if e == nil || calls != before {
 		t.Fatal("invalid input fetched")
 	}
 	for _, f := range []string{`{}`, `{"storage":{"containers":null}}`, `{"storage":{"containers":[{"id":"a","items":{"iron":null}}]}}`, `{"storage":{"containers":[{"id":"a","items":{},"position":[1]}]}}`} {
 		fixture = f
-		_, _, e = b.inventory(context.Background(), nil, inventoryQuery{})
+		_, _, e = b.inventory(context.Background(), nil, inventoryQuery{Item: "iron"})
 		if e == nil {
 			t.Fatal(f)
 		}
 	}
 	fixture = `{"storage":{"containers":[]}}`
-	_, out, e = b.inventory(context.Background(), nil, inventoryQuery{})
+	_, out, e = b.inventory(context.Background(), nil, inventoryQuery{Item: "iron"})
 	if e != nil || out.Containers == nil || out.Storage != nil || out.Equipped != nil {
 		t.Fatalf("%+v %v", out, e)
 	}
