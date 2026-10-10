@@ -51,7 +51,7 @@ func registerHousingTools(s *mcp.Server, b *backend) {
 	mcp.AddTool(s, &mcp.Tool{Name: "read_saved_housing", Description: "Read saved aggregate bed capacity and separate individual housing observations for explicitly recruited NPCs. Each list defaults to 25, maximum 100. Missing housing is unknown.", Annotations: &mcp.ToolAnnotations{ReadOnlyHint: true}}, b.savedHousing)
 }
 func (b *backend) savedHousing(ctx context.Context, _ *mcp.CallToolRequest, q housingQuery) (*mcp.CallToolResult, housingOutput, error) {
-	o := housingOutput{Source: "companion_save", Types: []housingType{}, Individuals: []housingPerson{}, Limit: 25, State: "missing", Note: "Latest ingested save only; ingestion and retrieval are not game capture time. Capacity uses parser-recognized player housing and template beds; deficit is not proven homeless people. Individual housed observations remain separate. Missing NPC ownership is excluded and disclosed. Null capacity or population means unknown. Lists bounded independently; no live fallback."}
+	o := housingOutput{Source: "companion_save", Types: []housingType{}, Individuals: []housingPerson{}, Limit: 25, State: "missing", Note: "Latest ingested save only; ingestion and retrieval are not game capture time. Capacity uses parser-recognized player housing and template beds; deficit is not proven homeless people. Individual housed observations remain separate. Missing NPC ownership is excluded and disclosed; exact deficit and spare capacity remain unknown until ownership is complete. Null capacity or population means unknown. Lists bounded independently; no live fallback."}
 	if q.Limit != nil {
 		o.Limit = *q.Limit
 	}
@@ -83,15 +83,15 @@ func (b *backend) savedHousing(ctx context.Context, _ *mcp.CallToolRequest, q ho
 	o.IngestedAt = w.IngestedAt
 	o.RetrievedAt = raw.RetrievedAt
 	if w.Housing != nil {
+		if w.Housing.Quarters != nil && *w.Housing.Quarters < 0 || w.Housing.Houses != nil && *w.Housing.Houses < 0 {
+			return nil, o, fmt.Errorf("negative housing capacity")
+		}
+		o.Quarters = w.Housing.Quarters
+		o.Houses = w.Housing.Houses
 		if w.Housing.Quarters == nil || w.Housing.Houses == nil {
 			o.State = "unknown"
 		} else {
-			if *w.Housing.Quarters < 0 || *w.Housing.Houses < 0 {
-				return nil, o, fmt.Errorf("negative housing capacity")
-			}
 			o.State = "available"
-			o.Quarters = w.Housing.Quarters
-			o.Houses = w.Housing.Houses
 		}
 		if w.Housing.Types != nil {
 			sumBeds, sumHouses := 0, 0
@@ -115,7 +115,7 @@ func (b *backend) savedHousing(ctx context.Context, _ *mcp.CallToolRequest, q ho
 					o.Types = append(o.Types, v)
 				}
 			}
-			if o.Quarters != nil && (sumBeds != *o.Quarters || sumHouses != *o.Houses) {
+			if o.Quarters != nil && sumBeds != *o.Quarters || o.Houses != nil && sumHouses != *o.Houses {
 				return nil, o, fmt.Errorf("housing totals mismatch")
 			}
 		}
@@ -144,7 +144,7 @@ func (b *backend) savedHousing(ctx context.Context, _ *mcp.CallToolRequest, q ho
 		}
 		o.Recruited = &count
 		o.IndividualTotal = count
-		if o.Quarters != nil {
+		if o.Quarters != nil && o.UnknownOwnership == 0 {
 			deficit, spare := 0, 0
 			if count > *o.Quarters {
 				deficit = count - *o.Quarters
