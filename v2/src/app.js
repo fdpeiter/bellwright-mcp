@@ -19,7 +19,11 @@ async function loadTool(name, args = {}, { refresh = false } = {}) {
     cache.set(key, result);
     return result;
   } catch (error) {
-    if (cache.has(key)) return { ...cache.get(key), status: 'stale', error: error.message };
+    if (cache.has(key)) {
+      const stale = { ...cache.get(key), status: 'stale', error: error.message };
+      cache.set(key, stale);
+      return stale;
+    }
     return { status: 'error', data: null, error: error.message, source: null };
   }
 }

@@ -16,3 +16,11 @@ Feature owners record map/extractor, workforce/person, supplies/storage and jour
 ## Release checks
 
 Concept rasters are exploratory and cannot prove accessibility. Required checks: production build, desktop/360px, 200% zoom, keyboard and focus, useful loading/empty/error/stale/missing-baseline states, source capture versus retrieval time, unchanged saved evidence on runtime outage, explicit unknown values and unsupported measurement. All public test fixtures/screenshots must be synthetic. Do not mark features Done until integrated and verified.
+
+## Integrated v2 review — 2026-10-10
+
+Individual before/after comparisons are recorded in v2/src/features/plan/ORIGINALITY.md, workforce/ORIGINALITY.md, supplies/ORIGINALITY.md and journal/README.md. Each identifies exact upstream sources and distinguishes replacement composition and interactions. They cover map/extractor/planner, roster/person, storage/detail, events/history, and source preferences separately.
+
+The integrated synthetic demo was inspected in the in-app browser: desktop Plan and Workforce, Supplies inspection, Journal and Source health at 360px. Supplies, Journal and Source health had no document horizontal overflow. Storage inspection moved focus to its heading. Mobile navigation selected the requested section. No browser console errors were captured. Source review found stale-cache, job-priority mapping, return-context and refresh-focus defects; corrected before review publication.
+
+Production build and 22 focused transport/model tests passed before these corrections; final rerun is recorded in PR. Full 200% zoom, keyboard-only end-to-end, all source-failure permutations and real-save visual acceptance remain pending under #55. This is a reviewable first implementation, not release approval. No private save evidence was used in browser fixtures or published.
