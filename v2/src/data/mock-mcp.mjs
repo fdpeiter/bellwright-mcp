@@ -1,0 +1,3 @@
+// Synthetic MCP test process. No external service or game state.
+import readline from 'node:readline';
+for await(const line of readline.createInterface({input:process.stdin})) {const req=JSON.parse(line);if(!req.id)continue;let result;if(req.method==='initialize')result={protocolVersion:'2024-11-05',capabilities:{tools:{}},serverInfo:{name:'synthetic-test',version:'1'}};else if(req.method==='tools/list')result={tools:[{name:'read_saved_world',inputSchema:{type:'object'}},{name:'write_save',inputSchema:{type:'object'}}]};else result={structuredContent:{source:'synthetic-test',data:{snapshot_id:0},retrieved_at:'test'}};process.stdout.write(JSON.stringify({jsonrpc:'2.0',id:req.id,result})+'\n');}
