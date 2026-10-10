@@ -2,7 +2,7 @@
 export const TOOL_NAMES = ['list_save_snapshots','read_saved_world','read_save_trends','read_live_map','read_resource_baseline','read_foraging_candidates','read_companion_telemetry'];
 const time = '2026-01-01T12:00:00Z';
 export const DEMO_TOOLS = TOOL_NAMES.map(name => ({name,description:'Synthetic demonstration; read-only evidence',inputSchema:{type:'object',properties:{},additionalProperties:false}}));
-const person = (guid,first_name,level,morale) => ({guid,first_name,last_name:'Demo',is_player_npc:true,skills:{harvest:{level,cap:8,xp:100},labour:{level:3,cap:7,xp:50},strength:{level:4,cap:8,xp:60}},equipment:{mainhand:'SimpleAxe_C'},injuries:[],morale,job_priorities:{harvest:1,labour:2},traits:[],position:[1000,1000,0]});
+const person = (guid,first_name,level,morale) => ({guid,first_name,last_name:'Demo',is_player_npc:true,skills:{harvest:{level,cap:8,xp:100},labour:{level:3,cap:7,xp:50},strength:{level:4,cap:8,xp:60}},equipment:{mainhand:'SimpleAxe_C'},injuries:[],morale,job_priorities:{harvesting:1},traits:[],position:[1000,1000,0]});
 const containers = [
  {id:'demo-camp-north',cls:'ForagingCamp_C',name:'North demonstration camp',faction:'Player',position:[0,0,0],items:{Berry_C:12,Mushroom_C:4}},
  {id:'demo-camp-south',cls:'ForagingCamp_C',name:'South demonstration camp',faction:'Player',position:[12000,0,0],items:{Berry_C:0}},
