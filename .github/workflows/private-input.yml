@@ -1,0 +1,21 @@
+name: Private-input setup validation
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Validate host input diagnostics with synthetic fixtures
+        run: pwsh -NoProfile -File scripts/preflight.tests.ps1
+      - name: Validate service classifications and private-output suppression
+        run: node --test scripts/check-services.test.mjs
+      - name: Validate synthetic owner Compose config and startup failure gate
+        run: pwsh -NoProfile -File scripts/preflight-compose.tests.ps1

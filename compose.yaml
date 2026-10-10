@@ -6,7 +6,12 @@ services:
       - "127.0.0.1:8710:8710"
     volumes:
       - companion-data:/data
-      - "${MAP_ASSETS_DIR}:/map-assets:ro"
+      - type: bind
+        source: ${MAP_ASSETS_DIR:?Set MAP_ASSETS_DIR in .env; see DOCKER-LOCAL.md}
+        target: /map-assets
+        read_only: true
+        bind:
+          create_host_path: false
     environment:
       MAP_BACKGROUND_FILE: /map-assets/exports/Karvenia_08_companion.png
     restart: unless-stopped
@@ -25,9 +30,24 @@ services:
     entrypoint: ["/live-map"]
     command: ["-log", "/game/UE4SS.log", "-port", "18126", "-background", "/assets/exports/Karvenia_08_map_overlay.png", "-calibration", "/assets/karvenia-background.json", "-resources", "/resources/resource-baseline.json", "-placements", "/resources/foraging-placement-candidates.json"]
     volumes:
-      - "${UE4SS_LOG_DIR}:/game:ro"
-      - "${MAP_ASSETS_DIR}:/assets:ro"
-      - "${RESOURCE_ANALYSIS_DIR}:/resources:ro"
+      - type: bind
+        source: ${UE4SS_LOG_DIR:?Set UE4SS_LOG_DIR in .env; see DOCKER-LOCAL.md}
+        target: /game
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ${MAP_ASSETS_DIR:?Set MAP_ASSETS_DIR in .env; see DOCKER-LOCAL.md}
+        target: /assets
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ${RESOURCE_ANALYSIS_DIR:?Set RESOURCE_ANALYSIS_DIR in .env; see DOCKER-LOCAL.md}
+        target: /resources
+        read_only: true
+        bind:
+          create_host_path: false
     restart: unless-stopped
 
   publisher:
@@ -40,7 +60,12 @@ services:
       BW_POLL_MS: "15000"
     volumes:
       - "./publisher:/publisher:ro"
-      - "${SAVE_DIR}:/saves:ro"
+      - type: bind
+        source: ${SAVE_DIR:?Set SAVE_DIR in .env; see DOCKER-LOCAL.md}
+        target: /saves
+        read_only: true
+        bind:
+          create_host_path: false
     restart: unless-stopped
 volumes:
   companion-data:
