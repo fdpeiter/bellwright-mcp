@@ -1,0 +1,328 @@
+'use client';
+// Villagers/Recruits table (desktop) + cards (mobile).
+import type { Npc } from '@/lib/types';
+import { cn } from '@/lib/utils';
+import { avatarColor, initials, itemLabel, moraleColor } from '@/lib/bw/format';
+import { normalizeInjuries } from '@/lib/bw/injuries';
+import { ALL_SKILLS, shapeCell, professionOf, combatTotal, classifyRole, ROLE_COLORS, NOTABLE_COMBAT_TOTAL, npcName, archetypeLabel, hireGateOf, NEGATIVE_TRAITS, traitLabel } from '@/lib/bw/model';
+import { InjuryBadge } from './injury-badge';
+import { Avatar } from './avatar';
+import { Icon } from './icons';
+import { ItemImg } from './item-img';
+import { C } from './ui';
+
+export type SortState = { key: string; dir: 1 | -1 };
+type Carried = Record<string, { item: string; qty: number }[]>;
+
+type Props = {
+  rows: Npc[];
+  npcCol: boolean;         // recruits view: location column + "near village"
+  archCol?: boolean;       // archetype/background column + role chip (both tables)
+  playtime: number | null; // save playtime, for injury heal countdowns
+  ingestedAt: string | null; // ingest wall-clock, anchors live countdown ticking
+  isMobile: boolean;
+  view: 'skills' | 'gear'; // gear view swaps skill columns for armor + inventory
+  carried?: Carried;       // actor guid -> carried items (gear view)
+  compareMode: boolean;
+  compareSet: string[];
+  sort: SortState;
+  onSort: (key: string, defDir: 1 | -1) => void;
+  onOpen: (guid: string) => void;
+  onToggleCompare: (guid: string) => void;
+};
+
+const TH = 'sticky top-0 z-[6] bg-iron-700 border-b border-line-4 text-left py-2 px-3 text-sand-350 font-semibold text-[11px] md:text-[12px] tracking-[.6px] uppercase';
+
+const skillTh = (active: boolean, divider: boolean): string => cn(
+  'sticky top-0 z-[6] bg-iron-700 border-b border-line-4 py-2 px-0.75 font-semibold text-[10px] md:text-[11px] tracking-[.3px] cursor-pointer text-center w-11 hover:text-sand-100',
+  active ? 'text-sand-100' : 'text-sand-400',
+  divider && 'border-l border-[#344D40]',
+);
+
+export const guidOf = (v: Npc): string => v.guid ?? npcName(v);
+
+export const Roster = ({ rows, npcCol, archCol = false, playtime, ingestedAt, isMobile, view, carried, compareMode, compareSet, sort, onSort, onOpen, onToggleCompare }: Props) => {
+  if (isMobile) return <MobileCards rows={rows} npcCol={npcCol} onOpen={onOpen} />;
+  const arrow = sort.dir > 0 ? '▲' : '▼';
+  const gearView = view === 'gear';
+  return (
+    <div className="bw-scroll overflow-auto h-full">
+      <table className={cn('border-separate border-spacing-0 w-full text-[12.5px] md:text-[14px]', gearView ? 'min-w-225' : 'min-w-280')}>
+        <thead>
+          <tr>
+            {compareMode && <th className={cn(TH, 'w-9 p-0')} />}
+            <th onClick={() => onSort('name', 1)} className={cn(TH, 'left-0 z-[7] cursor-pointer min-w-47.5 hover:text-sand-100')}>
+              {npcCol ? 'Recruit' : 'Villager'} <span className="text-gold">{sort.key === 'name' ? arrow : ''}</span>
+            </th>
+            {archCol && <th className={cn(TH, 'px-2.5')}>Archetype</th>}
+            {!gearView && ALL_SKILLS.map(([key, abbr, name], i) => (
+              <th key={key} onClick={() => onSort(key, -1)} data-tip={name} className={skillTh(sort.key === key, i === 7)}>
+                <span>{abbr}</span>
+                {sort.key === key && <span className="text-gold text-[8px] md:text-[9px]"> {arrow}</span>}
+              </th>
+            ))}
+            {gearView && <th className={cn(TH, 'border-l border-[#344D40]')}>Armor</th>}
+            {gearView && <th className={cn(TH, 'border-l border-[#344D40]')}>Inventory</th>}
+            <th className={cn(TH, 'border-l border-[#344D40]')}>Gear</th>
+            {/* recruits carry no morale value — drop the empty column */}
+            {!npcCol && (
+              <th onClick={() => onSort('morale', 1)} className={cn(TH, 'cursor-pointer hover:text-sand-100')}>
+                Morale <span className="text-gold">{sort.key === 'morale' ? arrow : ''}</span>
+              </th>
+            )}
+            <th className={TH}>Status</th>
+            {npcCol && <th className={TH}>Location</th>}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map(v => <Row key={guidOf(v)} v={v} npcCol={npcCol} archCol={archCol} playtime={playtime} ingestedAt={ingestedAt} compareMode={compareMode}
+            gearView={gearView} carried={carried}
+            selected={compareSet.includes(guidOf(v))} onOpen={onOpen} onToggleCompare={onToggleCompare} />)}
+        </tbody>
+      </table>
+    </div>
+  );
+};
+
+const Row = ({ v, npcCol, archCol, playtime, ingestedAt, compareMode, gearView, carried, selected, onOpen, onToggleCompare }: {
+  v: Npc; npcCol: boolean; archCol: boolean; playtime: number | null; ingestedAt: string | null; compareMode: boolean;
+  gearView: boolean; carried?: Carried; selected: boolean;
+  onOpen: (g: string) => void; onToggleCompare: (g: string) => void;
+}) => {
+  const name = npcName(v);
+  const first = v.first_name ?? name, last = v.last_name ?? '';
+  const morale = v.morale != null ? Math.round(v.morale) : null;
+  const mc = morale != null ? moraleColor(morale) : C.textDisabled;
+  const prof = professionOf(v);
+  const notable = combatTotal(v) >= NOTABLE_COMBAT_TOTAL;
+  const g = guidOf(v);
+  return (
+    <tr onClick={() => onOpen(g)} className="bw-row cursor-pointer border-b border-row">
+      {compareMode && (
+        <td className="text-center border-b border-row">
+          <button onClick={e => { e.stopPropagation(); onToggleCompare(g); }} className={cn(
+            'w-4.5 h-4.5 rounded-[5px] border cursor-pointer text-[11px] md:text-[12px] leading-none inline-flex items-center justify-center',
+            selected ? 'border-gold bg-gold text-[#0B1712]' : 'border-[#516C5B] bg-transparent text-transparent',
+          )}>{selected ? '✓' : ''}</button>
+        </td>
+      )}
+      <td className="py-[var(--rowpad)] px-3 border-b border-row sticky left-0 bg-iron-900">
+        <div className="flex items-center gap-2.5">
+          <Avatar v={v} size={40} radius={8} />
+          <div className="min-w-0 leading-[1.15]">
+            <div className="flex items-center gap-1.5 text-sand-100 font-medium whitespace-nowrap">{name}</div>
+            <div className="flex items-center gap-1.25 text-[10.5px] md:text-[11.5px] text-[#A5B6A9]">
+              {prof && (
+                <span className="inline-block px-1.25 rounded-[4px] text-[9px] md:text-[10px] font-semibold tracking-[.3px] uppercase text-moss-soft bg-[#8FA05B22]">{prof}</span>
+              )}
+              {v.gender ?? ''}
+            </div>
+          </div>
+        </div>
+      </td>
+      {archCol && (
+        <td className="py-1.5 px-2.5 border-b border-row whitespace-nowrap">
+          <span className="inline-flex items-center gap-1.5">
+            {notable && <span data-tip="High-value recruit" className="text-gold-bright">★</span>}
+            <TierBadge v={v} />
+            <span className="text-[11.5px] md:text-[12.5px] text-sand-350">{archetypeLabel(v)}</span>
+            <HireDiamonds v={v} />
+            <span data-tip="Role by skill caps (potential)" className="text-[8.5px] md:text-[9.5px] font-bold tracking-[.4px] uppercase border py-px px-1.25 rounded-[4px]" style={{
+              color: ROLE_COLORS[classifyRole(v)], borderColor: `${ROLE_COLORS[classifyRole(v)]}55`,
+            }}>{classifyRole(v)}</span>
+          </span>
+        </td>
+      )}
+      {!gearView && ALL_SKILLS.map(([key, , sname], i) => {
+        const c = shapeCell(sname, v.skills[key]);
+        return (
+          <td key={key} data-tip={c.tip} className={cn('py-1.5 px-1 border-b border-row text-center', i === 7 && 'border-l border-[#344D40]')}>
+            <div className="flex flex-col items-center gap-0.75">
+              <span className="font-mono text-[11.5px] md:text-[12.5px] font-medium" style={{ color: c.numColor }}>{c.disp}</span>
+              {c.showBar && (
+                <div className="w-7.5 h-0.75 rounded-[2px] bg-white/[.08] overflow-hidden">
+                  <div className="h-full" style={{ width: `${c.barPct}%`, background: c.numColor }} />
+                </div>
+              )}
+            </div>
+          </td>
+        );
+      })}
+      {gearView && (
+        <td className="py-1.5 px-3 border-b border-row border-l border-row">
+          <div className="flex gap-1.25">
+            {([['head', 'helm'], ['chest', 'torso'], ['gloves', 'gloves'], ['legs', 'legs'], ['boots', 'boots']] as const).map(([slot, ik]) => {
+              const raw = v.equipment[slot];
+              return (
+                <div key={slot} data-tip={raw ? itemLabel(raw) : `No ${slot}`} className={cn(
+                  'relative w-8.5 h-8.5 flex-none rounded-lg flex items-center justify-center',
+                  raw
+                    ? 'bg-iron-650 border border-[#3C5145]'
+                    : 'bg-[repeating-linear-gradient(45deg,rgba(212,180,106,.05)_0_6px,transparent_6px_12px)] border border-dashed border-gold/35',
+                )}>
+                  {raw
+                    ? <ItemImg cls={raw} size={26} fallback={<Icon name={ik} size={16} color="#E9EADD" />} />
+                    : <Icon name={ik} size={16} color="#84988A" />}
+                </div>
+              );
+            })}
+          </div>
+        </td>
+      )}
+      {gearView && (
+        <td className="py-1.5 px-3 border-b border-row border-l border-row">
+          <div className="flex items-center gap-1.25 flex-wrap max-w-90">
+            {(v.guid ? carried?.[v.guid] ?? [] : []).slice(0, 8).map(x => (
+              <div key={x.item} data-tip={`${itemLabel(x.item)} × ${x.qty}`} className="relative w-7.5 h-7.5 flex-none rounded-[7px] bg-iron-650 border border-line-4 flex items-center justify-center">
+                <ItemImg cls={x.item} size={22} fallback={<Icon name="pouch" size={14} color="#C8D2C7" />} />
+                {x.qty > 1 && (
+                  <span className="absolute -bottom-1 -right-1 min-w-3.5 h-3.5 px-0.5 flex items-center justify-center bg-[#344D40] border border-[#3C5145] rounded-[4px] font-mono text-[8px] md:text-[9px] font-semibold text-sand-300">{x.qty}</span>
+                )}
+              </div>
+            ))}
+            {(v.guid ? carried?.[v.guid] ?? [] : []).length === 0 && (
+              <span className="text-[11px] md:text-[12px] text-sand-800">Empty</span>
+            )}
+            {(v.guid ? carried?.[v.guid] ?? [] : []).length > 8 && (
+              <span className="font-mono text-[10px] md:text-[11px] text-sand-600">
+                +{(v.guid ? carried?.[v.guid] ?? [] : []).length - 8}
+              </span>
+            )}
+          </div>
+        </td>
+      )}
+      <td className="py-1.5 px-3 border-b border-row border-l border-row whitespace-nowrap leading-[1.3]">
+        <div className="text-[#E9EADD] text-[11.5px] md:text-[12.5px]">{itemLabel(v.equipment.weapon) || 'Unarmed'}</div>
+        <div className={cn('text-[10.5px] md:text-[11.5px]', v.equipment.offhand ? 'text-sand-400' : 'text-sand-800')}>
+          {v.equipment.offhand ? itemLabel(v.equipment.offhand) : 'No shield'}
+        </div>
+      </td>
+      {!npcCol && (
+        <td className="py-1.5 px-3 border-b border-row">
+          {morale != null ? (
+            <div className="flex items-center gap-1.75">
+              <div className="w-9 h-1.25 rounded-[3px] bg-white/[.08] overflow-hidden">
+                <div className="h-full" style={{ width: `${morale}%`, background: mc }} />
+              </div>
+              <span className="font-mono text-[11px] md:text-[12px]" style={{ color: mc }}>{morale}</span>
+            </div>
+          ) : <span className="text-[11px] md:text-[12px] text-sand-800">—</span>}
+        </td>
+      )}
+      <td className="py-1.5 px-3 border-b border-row">
+        <div className="flex flex-wrap gap-1 items-center">
+          {v.injuries.length > 0
+            ? normalizeInjuries(v.injuries).map(inj => (
+              <InjuryBadge key={inj.type} inj={inj} playtime={playtime} ingestedAt={ingestedAt} />
+            ))
+            : <span className="text-[11px] md:text-[12px] text-[#9BBE98]">Healthy</span>}
+          {v.traits?.map(t => (
+            <span key={t} data-tip="Acquired trait stored in the save"
+              className={NEGATIVE_TRAITS.has(t)
+                ? 'text-[9px] md:text-[10px] font-bold uppercase tracking-[.3px] text-rust-soft bg-rust/[.12] border border-rust/35 rounded-[4px] px-1.25 py-px'
+                : 'text-[9px] md:text-[10px] font-bold uppercase tracking-[.3px] text-moss-soft bg-moss/[.12] border border-moss/35 rounded-[4px] px-1.25 py-px'}>{traitLabel(t)}</span>
+          ))}
+        </div>
+      </td>
+      {npcCol && (
+        <td className="py-1.5 px-3 border-b border-row whitespace-nowrap">
+          <div className="text-[11.5px] md:text-[12.5px] text-sand-350">{v.village ? `near ${v.village}` : '—'}</div>
+        </td>
+      )}
+    </tr>
+  );
+};
+
+// Villager quality tier (template cap band) as a tinted badge:
+// High = green up-arrow, Medium = amber wave, Low = red down-arrow.
+const TIER_BADGE: Record<string, { path: string[]; color: string; cls: string; label: string }> = {
+  High: { path: ['M12 18V7', 'M7 12l5-5 5 5'], color: '#8FBF74', cls: 'bg-moss/[.14] border-moss/40', label: 'High' },
+  Medium: { path: ['M4 13c2-4 4-4 6 0s4 4 6 0'], color: '#C9A85E', cls: 'bg-brass/[.12] border-brass/35', label: 'Medium' },
+  Low: { path: ['M12 6v11', 'M7 12l5 5 5-5'], color: '#E0997F', cls: 'bg-rust/[.12] border-rust/35', label: 'Low' },
+};
+const TierBadge = ({ v }: { v: Npc }) => {
+  const t = v.archetype === 'villager' && v.tier ? TIER_BADGE[v.tier] : null;
+  if (!t) return null;
+  return (
+    <span data-tip={`${t.label} tier recruit`}
+      className={cn('inline-flex items-center justify-center w-4.5 h-4.5 rounded-md flex-none border', t.cls)}>
+      <svg width={12} height={12} viewBox="0 0 24 24" fill="none" stroke={t.color}
+        strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+        {t.path.map(d => <path key={d} d={d} />)}
+      </svg>
+    </span>
+  );
+};
+
+// Exact in-game hire gate (from hire-gates.json): trust-rank diamonds,
+// liberation requirement, renown cost.
+const HireDiamonds = ({ v }: { v: Npc }) => {
+  const g = hireGateOf(v);
+  if (!g) return null;
+  // base cost only — the game scales renown cost up as you hire more people
+  const tip = `Hire: ${g.trust} trust${g.liberation ? ' + village liberated' : ''} · base ${Math.round(g.renown)} renown (scales with hires)`;
+  return (
+    <span data-tip={tip} className="inline-flex items-center gap-1 cursor-default">
+      {/* the game's trust-rank badge (wiki-hosted first-party asset) */}
+      <img src={`/icons/bw/trust-${g.trust.toLowerCase()}.png`} alt={g.trust}
+        className="w-4.5 h-4.5 max-w-none object-contain" />
+      {g.liberation && <span className="text-[8px] md:text-[9px] font-bold tracking-[.4px] uppercase text-gold-bright/80">LIB</span>}
+    </span>
+  );
+};
+
+const MobileCards = ({ rows, npcCol, onOpen }: {
+  rows: Npc[]; npcCol: boolean; onOpen: (g: string) => void;
+}) => (
+  <div className="bw-scroll h-full overflow-y-auto flex flex-col gap-2.25 p-3.5 pb-16">
+    {rows.map(v => {
+      const name = npcName(v);
+      const first = v.first_name ?? name, last = v.last_name ?? '';
+      const morale = v.morale != null ? Math.round(v.morale) : null;
+      const top = ALL_SKILLS
+        .map(([key, abbr, sname]) => ({ abbr, sname, s: v.skills[key] }))
+        .filter(o => o.s && o.s.cap > 0)
+        .sort((a, b) => b.s.level - a.s.level).slice(0, 3);
+      return (
+        <div key={guidOf(v)} onClick={() => onOpen(guidOf(v))} className="bg-iron-750 border border-line-2 rounded-[11px] p-3.25 cursor-pointer">
+          <div className="flex items-center gap-2.75">
+            <Avatar v={v} size={36} radius={9} />
+            <div className="flex-1 min-w-0">
+              <div className="text-sand-100 font-semibold text-[15px] md:text-[16.5px]">{name}</div>
+              <div className="text-[11.5px] md:text-[12.5px] text-[#A5B6A9]">{v.gender ?? ''} · {archetypeLabel(v)}</div>
+            </div>
+            <div className="flex flex-col items-end gap-1">
+              {morale != null && (
+                <span className="font-mono text-xs md:text-[13px]" style={{ color: moraleColor(morale) }}>♥ {morale}</span>
+              )}
+              {v.injuries.length > 0 && (
+                <span className="text-[10px] md:text-[11px] text-[#EDA593]">
+                  {normalizeInjuries(v.injuries).map(i => i.label).join(', ')}
+                </span>
+              )}
+            </div>
+          </div>
+          <div className="flex gap-1.75 mt-2.75 flex-wrap">
+            {top.map(o => {
+              const cell = shapeCell(o.sname, o.s);
+              return (
+                <span key={o.abbr} className="inline-flex gap-1.25 text-[11px] md:text-[12px] py-0.75 px-2 rounded-md bg-[#21362C] border border-line-3">
+                  <span className="text-sand-400">{o.abbr}</span>
+                  <span className="font-mono" style={{ color: cell.numColor }}>{o.s.level}/{o.s.cap}</span>
+                </span>
+              );
+            })}
+          </div>
+          <div className="mt-2.5 pt-2.25 border-t border-[#241E17] flex justify-between text-[11.5px] md:text-[12.5px]">
+            <span className="text-[#E9EADD]">
+              {itemLabel(v.equipment.weapon) || 'Unarmed'}
+              <span className="text-sand-700"> · </span>
+              <span className="text-sand-400">{v.equipment.offhand ? itemLabel(v.equipment.offhand) : 'No shield'}</span>
+            </span>
+            {npcCol && v.village && <span className="text-sand-700">near {v.village}</span>}
+          </div>
+        </div>
+      );
+    })}
+  </div>
+);

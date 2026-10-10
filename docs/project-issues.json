@@ -1,0 +1,74 @@
+[
+  {
+    "title": "Publish the imported baseline and document upstream provenance",
+    "priority": "P0",
+    "area": "repository",
+    "body": "## Problem\nLocal source is imported but currently untracked. Preserve upstream MIT attribution and distinguish our Go MCP additions.\n\n## Scope\nREADME.md; LICENSE; initial Git history\n\n## Acceptance criteria\n- [ ] Review tracked files for private saves/logs/assets\n- [ ] establish an initial reviewed commit\n- [ ] add Go/Docker CI without distributing game data.\n\n## Agent coordination\nOne agent owns this issue. Claim it before edits, use a dedicated codex/ branch or worktree, and avoid files owned by another active issue. Record dependencies and validation. Move to In review only with a concrete diff/PR; Done requires acceptance checks.\n\nPriority: P0\nWorkstream: repository\n"
+  },
+  {
+    "title": "Verify native Bellwright MCP tools in a new Codex session",
+    "priority": "P0",
+    "area": "mcp",
+    "body": "## Problem\nDocker stdio smoke passes; native assistant connection needs separate proof.\n\n## Scope\nmcp-go/README.md; client setup docs\n\n## Acceptance criteria\n- [ ] Discover seven native tools in a fresh session\n- [ ] call saved snapshots and live map\n- [ ] report provenance/freshness\n- [ ] document reconnect instructions.\n\n## Agent coordination\nOne agent owns this issue. Claim it before edits, use a dedicated codex/ branch or worktree, and avoid files owned by another active issue. Record dependencies and validation. Move to In review only with a concrete diff/PR; Done requires acceptance checks.\n\nPriority: P0\nWorkstream: mcp\n"
+  },
+  {
+    "title": "Verify fresh no-save movement through Docker and MCP",
+    "priority": "P0",
+    "area": "live",
+    "body": "## Problem\nLatest feed reports stale. Valid HTTP responses are not proof of current gameplay.\n\n## Scope\nmcp-go/internal/livemap; live deployment docs\n\n## Acceptance criteria\n- [ ] Record two changing player coordinates without saving\n- [ ] verify source capture timestamps\n- [ ] menu/exit becomes stale\n- [ ] reload changes session without save fallback.\n\n## Agent coordination\nOne agent owns this issue. Claim it before edits, use a dedicated codex/ branch or worktree, and avoid files owned by another active issue. Record dependencies and validation. Move to In review only with a concrete diff/PR; Done requires acceptance checks.\n\nPriority: P0\nWorkstream: live\n"
+  },
+  {
+    "title": "Bridge UE4SS actors into the companion realtime map",
+    "priority": "P0",
+    "area": "live",
+    "body": "## Problem\nCompanion telemetry and Unreal map are separate pipelines.\n\n## Scope\nnew Go bridge command; web telemetry schema\n\n## Acceptance criteria\n- [ ] Forward only fresh bounded data\n- [ ] preserve source time/session\n- [ ] stale data must not become fresh when forwarded\n- [ ] support building actors\n- [ ] show movement in companion without new saves.\n\n## Agent coordination\nOne agent owns this issue. Claim it before edits, use a dedicated codex/ branch or worktree, and avoid files owned by another active issue. Record dependencies and validation. Move to In review only with a concrete diff/PR; Done requires acceptance checks.\n\nPriority: P0\nWorkstream: live\n"
+  },
+  {
+    "title": "Improve UI source and freshness indicators",
+    "priority": "P1",
+    "area": "ui",
+    "body": "## Problem\nCurrent wording can confuse save-backed data with realtime state.\n\n## Scope\nweb/components/bw\n\n## Acceptance criteria\n- [ ] Label save snapshots accurately\n- [ ] show ingest/capture age\n- [ ] distinguish stale/live/static data\n- [ ] verify desktop/mobile layouts.\n\n## Agent coordination\nOne agent owns this issue. Claim it before edits, use a dedicated codex/ branch or worktree, and avoid files owned by another active issue. Record dependencies and validation. Move to In review only with a concrete diff/PR; Done requires acceptance checks.\n\nPriority: P1\nWorkstream: ui\n"
+  },
+  {
+    "title": "Add bounded nearby-resource and placement MCP queries",
+    "priority": "P1",
+    "area": "mcp",
+    "body": "## Problem\nCurrent resource tool returns the entire packaged baseline.\n\n## Scope\nmcp-go/main.go; MCP tests\n\n## Acceptance criteria\n- [ ] Add category/radius/bounds filters and hard result limits\n- [ ] return matched/returned/truncated counts\n- [ ] preserve unknown availability\n- [ ] test limits and invalid parameters.\n\n## Agent coordination\nOne agent owns this issue. Claim it before edits, use a dedicated codex/ branch or worktree, and avoid files owned by another active issue. Record dependencies and validation. Move to In review only with a concrete diff/PR; Done requires acceptance checks.\n\nPriority: P1\nWorkstream: mcp\n"
+  },
+  {
+    "title": "Make private-input Docker setup reproducible",
+    "priority": "P1",
+    "area": "infra",
+    "body": "## Problem\nLive services depend on private assets and logs from the old workspace.\n\n## Scope\ncompose.yaml; .env.example; setup/preflight scripts\n\n## Acceptance criteria\n- [ ] Preflight identifies missing files and inactive game separately\n- [ ] document probe schema/deployment and lawful asset extraction\n- [ ] no saves/assets committed\n- [ ] clean-owner setup works.\n\n## Agent coordination\nOne agent owns this issue. Claim it before edits, use a dedicated codex/ branch or worktree, and avoid files owned by another active issue. Record dependencies and validation. Move to In review only with a concrete diff/PR; Done requires acceptance checks.\n\nPriority: P1\nWorkstream: infra\n"
+  },
+  {
+    "title": "Test save polling stability and retry behavior",
+    "priority": "P1",
+    "area": "save",
+    "body": "## Problem\nDocker uses polling because Windows bind mount events are unreliable.\n\n## Scope\npublisher/src/publisher.ts; publisher tests\n\n## Acceptance criteria\n- [ ] Test unchanged hash deduplication, stable completed writes, one upload at a time, retry after server failure, restart behavior and read-only mount.\n\n## Agent coordination\nOne agent owns this issue. Claim it before edits, use a dedicated codex/ branch or worktree, and avoid files owned by another active issue. Record dependencies and validation. Move to In review only with a concrete diff/PR; Done requires acceptance checks.\n\nPriority: P1\nWorkstream: save\n"
+  },
+  {
+    "title": "Validate the first foraging placement experiment",
+    "priority": "P1",
+    "area": "resources",
+    "body": "## Problem\nNode coverage is a hypothesis; it is not measured maximum output.\n\n## Scope\nresource-analysis documentation and isolated tools\n\n## Acceptance criteria\n- [ ] Confirm camp identity/radius units, buildability/access and seasonal availability\n- [ ] compare controlled worker output and hauling before/after\n- [ ] record uncertainty.\n\n## Agent coordination\nOne agent owns this issue. Claim it before edits, use a dedicated codex/ branch or worktree, and avoid files owned by another active issue. Record dependencies and validation. Move to In review only with a concrete diff/PR; Done requires acceptance checks.\n\nPriority: P1\nWorkstream: resources\n"
+  },
+  {
+    "title": "Choose a distinct product name and migration plan",
+    "priority": "P2",
+    "area": "naming",
+    "body": "## Problem\nUpstream already uses Bellwright Companion.\n\n## Scope\ndocs/NAMING.md; coordinated branding follow-up\n\n## Acceptance criteria\n- [ ] Present a recommended name and alternatives\n- [ ] retain upstream attribution\n- [ ] obtain selection before repo/package/server rename\n- [ ] list affected references and compatibility plan.\n\n## Agent coordination\nOne agent owns this issue. Claim it before edits, use a dedicated codex/ branch or worktree, and avoid files owned by another active issue. Record dependencies and validation. Move to In review only with a concrete diff/PR; Done requires acceptance checks.\n\nPriority: P2\nWorkstream: naming\n"
+  },
+  {
+    "title": "Extend resource coverage and settlement identity evidence",
+    "priority": "P2",
+    "area": "resources",
+    "body": "## Problem\nPackaged harvestables do not prove complete tree/ore coverage or ownership.\n\n## Scope\nisolated extraction tools and provenance docs\n\n## Acceptance criteria\n- [ ] Document category/scope coverage\n- [ ] investigate tree/ore classes\n- [ ] correlate runtime/save IDs only with evidence\n- [ ] preserve unknown ownership.\n\n## Agent coordination\nOne agent owns this issue. Claim it before edits, use a dedicated codex/ branch or worktree, and avoid files owned by another active issue. Record dependencies and validation. Move to In review only with a concrete diff/PR; Done requires acceptance checks.\n\nPriority: P2\nWorkstream: resources\n"
+  },
+  {
+    "title": "Add repeatable Go MCP and Docker regression checks",
+    "priority": "P1",
+    "area": "ci",
+    "body": "## Problem\nLocal Go checks and Docker tool smoke passed but need repeatable CI.\n\n## Scope\n.github/workflows; mcp-go tests/smoke\n\n## Acceptance criteria\n- [ ] Run Go tests/vet, frontend syntax validation and Docker builds\n- [ ] fake backend MCP schema tests\n- [ ] optional real-save/live checks remain local without private assets.\n\n## Agent coordination\nOne agent owns this issue. Claim it before edits, use a dedicated codex/ branch or worktree, and avoid files owned by another active issue. Record dependencies and validation. Move to In review only with a concrete diff/PR; Done requires acceptance checks.\n\nPriority: P1\nWorkstream: ci\n"
+  }
+]

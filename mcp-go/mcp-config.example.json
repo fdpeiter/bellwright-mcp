@@ -1,0 +1,17 @@
+{
+  "mcpServers": {
+    "bellwright": {
+      "args": [
+        "compose",
+        "--project-directory",
+        "C:\\Users\\fdpei\\Documents\\github\\fdpeiter\\bellwright-mcp",
+        "run",
+        "--rm",
+        "--no-deps",
+        "-T",
+        "mcp"
+      ],
+      "command": "C:\\Users\\fdpei\\AppData\\Local\\Programs\\DockerDesktop\\resources\\bin\\docker.exe"
+    }
+  }
+}

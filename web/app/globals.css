@@ -1,0 +1,155 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  --radius: 0.625rem;
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
+}
+
+.dark {
+  --background: #101D19;
+  --foreground: #F1EBDD;
+  --card: #1A2B24;
+  --card-foreground: oklch(0.985 0 0);
+  --popover: #1A2B24;
+  --popover-foreground: #F1EBDD;
+  --primary: oklch(0.922 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: #3C5145;
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.556 0 0);
+}
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+}
+
+@layer base {
+  * { @apply border-border outline-ring/50; }
+  body { @apply bg-background text-foreground; }
+}
+
+/* Forest & Brass — shared palette, approved design playbook. */
+@theme {
+  --font-serif: var(--font-steward-serif), 'Libre Baskerville', serif;
+  --font-sans: var(--font-plex-sans), 'IBM Plex Sans', system-ui, sans-serif;
+  --font-mono: var(--font-plex-mono), 'IBM Plex Mono', monospace;
+  --color-iron-950: #0B1511;
+  --color-iron-900: #101D19;
+  --color-iron-850: #13231D;
+  --color-iron-800: #162820;
+  --color-iron-750: #1A2B24;
+  --color-iron-700: #1D3027;
+  --color-iron-650: #233A2F;
+  --color-ink: #0B1712;
+  --color-line: #2C4438;
+  --color-line-2: #344D40;
+  --color-line-3: #3C5145;
+  --color-line-4: #466052;
+  --color-row: #21362C;
+  --color-gold: #D4B46A;
+  --color-gold-bright: #E3CB92;
+  --color-gold-deep: #AF914F;
+  --color-sand-50: #F7F2E6;
+  --color-sand-100: #F1EBDD;
+  --color-sand-200: #E9EADD;
+  --color-sand-300: #C8D2C7;
+  --color-sand-350: #BDCABC;
+  --color-sand-400: #B4C1B7;
+  --color-sand-500: #A5B6A9;
+  --color-sand-600: #9CAD9F;
+  --color-sand-700: #92A497;
+  --color-sand-800: #84988A;
+  --color-moss: #7DB068;
+  --color-moss-bright: #7FB05B;
+  --color-moss-soft: #8FA05B;
+  --color-rust: #C4553B;
+  --color-rust-bright: #D9614A;
+  --color-rust-soft: #E0997F;
+  --color-sky: #5FA8CE;
+  --color-sky-bright: #5FB4D6;
+  --color-brass: #D4B46A;
+}
+
+/* ---- Bellwright Companion design chrome (Claude Design port) ---- */
+/* Pin the shell to the real viewport. The desktop zoom (below) scales the whole
+   UI 10%, which makes 100dvh render 10% too tall and scroll the document. Using
+   height:100% cascades through the zoomed coordinate space so the app-shell
+   fills the viewport exactly; overflow:hidden keeps the document itself from
+   scrolling (each tab body is the single scroll region). */
+html, body { height: 100%; overflow: hidden; }
+body { background: #0B1511; }
+/* Desktop up-scaling is now done with proper responsive md: text sizes on each
+   element (the design's small type gets a ~1.1x bump ≥md) instead of a global
+   `zoom`, which broke viewport-height math and floating-ui dropdown collision. */
+::selection { background: rgba(212, 180, 106, .3); color: #fff; }
+.bw-scroll::-webkit-scrollbar { width: 10px; height: 10px; }
+.bw-scroll::-webkit-scrollbar-track { background: transparent; }
+.bw-scroll::-webkit-scrollbar-thumb { background: #466052; border-radius: 6px; border: 2px solid #16130F; }
+.bw-scroll::-webkit-scrollbar-thumb:hover { background: #4c4133; }
+input::placeholder { color: #92A497; }
+tr.bw-row:hover { background: rgba(212, 180, 106, .05); }
+@keyframes bwpulse { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
+@keyframes bwslide { from { transform: translateX(30px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+@keyframes bwfade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes bwspin { to { transform: rotate(360deg); } }
+
+/* Persistent desktop navigation; mobile keeps the section picker. */
+.steward-shell { --accent: #D4B46A; --gold: #E3CB92; --rowpad: 13px; }
+.steward-brand { background: #F1EBDD; border-radius: 7px; padding: 5px 10px; flex: 0 1 220px; }
+.steward-brand img { display: block; width: 200px; max-width: 100%; height: 48px; object-fit: contain; }
+.steward-rail { width: 190px; background: #13231D; border-right: 1px solid #344D40; }
+.steward-rail button { min-height: 44px; justify-content: flex-start; width: 100%; }
+.steward-rail button[aria-current=page] { box-shadow: inset 3px 0 #D4B46A; }
+.steward-shell :is(button,a,input,select,summary):focus-visible { outline: 2px solid #D4B46A; outline-offset: 3px; }
+.steward-shell .bw-row:hover > td { background-color: #1A2B24; }
+@media (pointer: coarse) { .steward-shell button, .steward-shell select, .steward-shell summary { min-height: 44px; } .steward-shell input { font-size: 16px; } }
+@media (max-width: 639px) { .steward-brand { flex-basis: 176px; padding: 4px 7px; } .steward-brand img { height: 44px; } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }

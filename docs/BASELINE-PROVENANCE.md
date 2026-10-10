@@ -1,0 +1,11 @@
+# Imported baseline provenance
+
+Bellwright Steward is derived from [claygorman/bellwright-companion](https://github.com/claygorman/bellwright-companion), under the retained MIT license, copyright 2026 Clay Gorman. This initial commit records the existing local import and approved additions; it does not recreate upstream Git history or assert the exact import revision. Upstream main observed on 10 October 2026: `0a47289648d6a3584cae12dc036b7566bbc98e25` (reference only).
+
+The upstream dashboard, parser, publisher and Rust save-container loader remain attributed in README.md, LICENSE and source. The README also credits BradMoeller/bellwright-gold-editor for the MIT save loading foundation. Our additions include the Go read-only MCP/live-map services, local Docker orchestration, map preparation and private image serving, integration documentation and Bellwright Steward display branding. Upstream package/module identifiers are retained for compatibility, not a claim of upstream ownership of our additions.
+
+Private saves, databases, logs, environment secrets, extracted terrain/portraits, resource captures and downloaded wiki icons are excluded. Existing upstream documentation screenshots are illustrative project documentation, not captures of the user's save. The local generated Steward lockup is a product branding asset.
+
+Validation of the frozen initial index: Go test/vet/build passed; Compose config passed; MCP Docker image and full production dashboard Docker build passed. A local host pnpm attempt was blocked by its bundled newer package manager's native-build policy; the repository-pinned pnpm production Docker build succeeded. MCP initialization discovered seven tools and two companion calls passed; further smoke was blocked by the unavailable live-map backend on port 18126. Earlier full smoke evidence is recorded separately in #10 and POC-STATUS.md and is not proof of current live freshness.
+
+Concurrent UI edits after staging remain outside this baseline and require their owner's separate validation. Inclusion of existing map work does not establish acceptance of #13 or UI issue #5. CI added here runs Go tests/vet/build, synthetic-path Compose validation and MCP Docker build; #12 owns broader regression coverage.

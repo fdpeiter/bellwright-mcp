@@ -1,0 +1,49 @@
+name: bellwright
+services:
+  companion:
+    build: .
+    ports:
+      - "127.0.0.1:8710:8710"
+    volumes:
+      - companion-data:/data
+      - "${MAP_ASSETS_DIR}:/map-assets:ro"
+    environment:
+      MAP_BACKGROUND_FILE: /map-assets/exports/Karvenia_08_companion.png
+    restart: unless-stopped
+  mcp:
+    build: ./mcp-go
+    network_mode: "service:companion"
+    depends_on:
+      - companion
+    stdin_open: true
+    profiles: [mcp]
+    command: ["--companion-url", "http://127.0.0.1:8710", "--live-url", "http://127.0.0.1:18126"]
+  live-map:
+    build: ./mcp-go
+    network_mode: "service:companion"
+    depends_on: [companion]
+    entrypoint: ["/live-map"]
+    command: ["-log", "/game/UE4SS.log", "-port", "18126", "-background", "/assets/exports/Karvenia_08_map_overlay.png", "-calibration", "/assets/karvenia-background.json", "-resources", "/resources/resource-baseline.json", "-placements", "/resources/foraging-placement-candidates.json"]
+    volumes:
+      - "${UE4SS_LOG_DIR}:/game:ro"
+      - "${MAP_ASSETS_DIR}:/assets:ro"
+      - "${RESOURCE_ANALYSIS_DIR}:/resources:ro"
+    restart: unless-stopped
+
+  publisher:
+    image: node:24-trixie-slim
+    network_mode: "service:companion"
+    depends_on: [companion]
+    working_dir: /publisher
+    command: ["node", "src/publisher.ts", "watch", "--dir", "/saves", "--url", "http://127.0.0.1:8710/api/ingest"]
+    environment:
+      BW_POLL_MS: "15000"
+    volumes:
+      - "./publisher:/publisher:ro"
+      - "${SAVE_DIR}:/saves:ro"
+    restart: unless-stopped
+volumes:
+  companion-data:
+
+
+

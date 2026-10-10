@@ -1,0 +1,62 @@
+[
+  {
+    "title": "Publish the imported baseline and document upstream provenance",
+    "url": "https://github.com/fdpeiter/bellwright-mcp/issues/1",
+    "number": 1
+  },
+  {
+    "title": "Verify native Bellwright MCP tools in a new Codex session",
+    "url": "https://github.com/fdpeiter/bellwright-mcp/issues/2",
+    "number": 2
+  },
+  {
+    "title": "Verify fresh no-save movement through Docker and MCP",
+    "url": "https://github.com/fdpeiter/bellwright-mcp/issues/3",
+    "number": 3
+  },
+  {
+    "title": "Bridge UE4SS actors into the companion realtime map",
+    "url": "https://github.com/fdpeiter/bellwright-mcp/issues/4",
+    "number": 4
+  },
+  {
+    "title": "Improve UI source and freshness indicators",
+    "url": "https://github.com/fdpeiter/bellwright-mcp/issues/5",
+    "number": 5
+  },
+  {
+    "title": "Add bounded nearby-resource and placement MCP queries",
+    "url": "https://github.com/fdpeiter/bellwright-mcp/issues/6",
+    "number": 6
+  },
+  {
+    "title": "Make private-input Docker setup reproducible",
+    "url": "https://github.com/fdpeiter/bellwright-mcp/issues/7",
+    "number": 7
+  },
+  {
+    "title": "Test save polling stability and retry behavior",
+    "url": "https://github.com/fdpeiter/bellwright-mcp/issues/8",
+    "number": 8
+  },
+  {
+    "title": "Validate the first foraging placement experiment",
+    "url": "https://github.com/fdpeiter/bellwright-mcp/issues/9",
+    "number": 9
+  },
+  {
+    "title": "Choose a distinct product name and migration plan",
+    "url": "https://github.com/fdpeiter/bellwright-mcp/issues/10",
+    "number": 10
+  },
+  {
+    "title": "Extend resource coverage and settlement identity evidence",
+    "url": "https://github.com/fdpeiter/bellwright-mcp/issues/11",
+    "number": 11
+  },
+  {
+    "title": "Add repeatable Go MCP and Docker regression checks",
+    "url": "https://github.com/fdpeiter/bellwright-mcp/issues/12",
+    "number": 12
+  }
+]

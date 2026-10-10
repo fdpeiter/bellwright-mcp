@@ -1,0 +1,33 @@
+# personal save data — never commit
+*.sav
+*.sav_backup*
+payload.bin
+world.json
+target/
+node_modules/
+web/.data/
+.next/
+.env.local
+.env*.local
+.idea/
+publisher/dist/
+web/public/portraits/
+private/
+web/public/map/
+
+mcp-go/*.exe
+
+.env
+live-service.tmp
+
+.local-qa/
+
+docs/*.tmp
+
+# Downloaded game/wiki assets and private runtime output
+web/public/icons/bw/
+*.log
+*.db
+*.db-shm
+*.db-wal
+
