@@ -8,4 +8,4 @@ Lists default to 25, maximum 100, and expose truncation. Partial and null eviden
 
 Validation passed: go test ./..., go vet ./..., go build, and capability-smoke.mjs. Integration tests validate actual responses against output schemas for all 20 tools. Real stdio smoke checks every tool, invalid limits, null/stale evidence, independent outages and EOF. It also asserts ranking score/ties, housing unknown observations, stock deficits, identifier provenance and resource bounds/truncation. Module regressions cover malformed/missing evidence, partial capacity and incomplete population/scope data.
 
-Verification uses synthetic fixtures rather than private game saves. No save-write path, private data or new game assets are introduced. The feature PR is stacked on #46 and must follow its integration.
+Verification uses synthetic fixtures rather than private game saves. No save-write path, private data or new game assets are introduced. PR #46 was merged upstream before this feature PR was published; this batch targets main.
