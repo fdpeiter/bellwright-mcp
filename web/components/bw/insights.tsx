@@ -6,6 +6,7 @@ import type { VillageState, Housing } from '@/lib/types';
 import { Icon } from './icons';
 import { Avatar } from './avatar';
 import { GearPanel } from './gear';
+import { StockPlanner } from './stock-planner';
 import { SEV } from './ui';
 
 // Upgrade candidates: weakest non-specialized villagers vs the recruit pool
@@ -180,6 +181,7 @@ export const Insights = ({ cards, upgrades, villages, housing, villagerCount, sn
 }) => (
   <div className="bw-scroll h-full overflow-y-auto">
     <div className="pt-5.5 px-6 pb-16">
+      <StockPlanner snapshotId={snapshotId} />
       <GearPanel key={snapshotId ?? 0} onOpen={onOpen} />
       {housing && <HousingPanel housing={housing} villagerCount={villagerCount} />}
       <VillagesPanel villages={villages} />

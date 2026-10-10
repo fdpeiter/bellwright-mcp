@@ -40,6 +40,7 @@ const args={
  read_saved_village_progress:{limit:1},read_connection_health:{},
  rank_saved_workers:{skill:'craft',limit:1},audit_saved_job_priorities:{limit:1},
  read_saved_housing:{limit:1},compare_saved_stock_targets:{targets:{Iron_C:5},scope:'stored',limit:1},
+ recommend_stock_targets:{plans:[{item:'Iron_C',rate_per_hour:2,replenishment_hours:3,safety_buffer_fraction:0.5,planned_demand:1}],limit:1},
  search_observed_items:{query:'iron',limit:1},summarize_resource_coverage:{limit:1}
 };
 try{
@@ -63,9 +64,10 @@ try{
   if(tool.name==='compare_saved_stock_targets'){assert.equal(out.items[0].quantity,3);assert.equal(out.items[0].deficit,2)}
   if(tool.name==='search_observed_items'){assert.equal(out.items[0].item_class,'Iron_C');assert.equal(out.items[0].official_label,null)}
   if(tool.name==='summarize_resource_coverage'){assert.equal(out.total_nodes,3);assert.equal(out.categories[0].nodes,2);assert.equal(out.categories[0].bounds.min_z,-1);assert.equal(out.truncated,1)}
+  if(tool.name==='recommend_stock_targets'){assert.equal(out.items[0].target,10);assert.equal(out.items[0].current,3);assert.equal(out.items[0].deficit,7);assert.equal(out.items[0].safety_stock,3)}
   console.log(tool.name+': stdio OK');
  }
- for(const name of ['read_resource_baseline','read_foraging_candidates','read_gear_plan','read_item_history','search_saved_villagers','locate_saved_inventory','inspect_saved_squads','read_saved_village_progress','rank_saved_workers','audit_saved_job_priorities','read_saved_housing','compare_saved_stock_targets','search_observed_items','summarize_resource_coverage']){
+ for(const name of ['read_resource_baseline','read_foraging_candidates','read_gear_plan','read_item_history','search_saved_villagers','locate_saved_inventory','inspect_saved_squads','read_saved_village_progress','rank_saved_workers','audit_saved_job_priorities','read_saved_housing','compare_saved_stock_targets','search_observed_items','summarize_resource_coverage','recommend_stock_targets']){
   const bad=await call('tools/call',{name,arguments:{...args[name],limit:0}});
   assert.ok(bad.error||bad.result?.isError,name+': invalid limit accepted');
  }

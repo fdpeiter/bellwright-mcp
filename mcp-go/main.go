@@ -70,7 +70,7 @@ func (b *backend) read(ctx context.Context, path, source, note string) (*mcp.Cal
 	return nil, output{source, time.Now().UTC().Format(time.RFC3339), decoded, note}, nil
 }
 func server(companion, live *backend) *mcp.Server {
-	s := mcp.NewServer(&mcp.Implementation{Name: "bellwright-steward-go", Version: "0.3.0"}, nil)
+	s := mcp.NewServer(&mcp.Implementation{Name: "bellwright-steward-go", Version: "0.4.0"}, nil)
 	specs := []struct {
 		name, path, source, note string
 		b                        *backend
@@ -100,6 +100,7 @@ func server(companion, live *backend) *mcp.Server {
 	registerJobPriorityTools(s, companion)
 	registerHousingTools(s, companion)
 	registerStockTargetTools(s, companion)
+	registerStockRecommendationTools(s, companion)
 	registerObservedItemTools(s, companion)
 	registerResourceCoverageTools(s, live)
 	return s
