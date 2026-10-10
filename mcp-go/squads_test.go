@@ -10,7 +10,7 @@ func TestSquadResolutionAndBounds(t *testing.T) {
 	b := healthFixture(t, map[string]string{"/api/world": `{"snapshot_id":9,"ingested_at":"ingestion","groups":[{"guid":"g","name":"Guard","members":["known","unknown","duplicate","overflow"]},{"guid":"g2","name":"Guard Two","members":[]}],"npcs":[{"guid":"known","first_name":"A","is_player_npc":true,"equipment":{"head":"Hat"}},{"guid":"duplicate"},{"guid":"duplicate"}]}`})
 	one, three := 1, 3
 	_, o, e := b.squads(context.Background(), nil, squadQuery{Name: "guard", Limit: &one, MemberLimit: &three})
-	if e != nil || o.Matched != 2 || o.Truncated != 1 || o.Groups[0].TruncatedMembers != 1 || o.Groups[0].Members[0].Equipment["head"] != "Hat" || o.Groups[0].Members[1].Resolution != "unmatched" || o.Groups[0].Members[2].Resolution != "ambiguous" {
+	if e != nil || o.Matched != 2 || o.Truncated != 1 || o.Groups[0].TruncatedMembers != 1 || (*o.Groups[0].Members[0].Equipment)["head"] != "Hat" || o.Groups[0].Members[1].Resolution != "unmatched" || o.Groups[0].Members[2].Resolution != "ambiguous" {
 		t.Fatalf("%+v %v", o, e)
 	}
 	zero := 0
@@ -50,5 +50,19 @@ func TestSquadMCP(t *testing.T) {
 	r, e = cs.CallTool(ctx, &mcp.CallToolParams{Name: "inspect_saved_squads", Arguments: map[string]any{"limit": 101}})
 	if e == nil && !r.IsError {
 		t.Fatal("schema accepted invalid bound")
+	}
+}
+
+func TestSquadRejectUnknownMembership(t *testing.T) {
+	for _, raw := range []string{`{"groups":[{"guid":"g"}],"npcs":[]}`, `{"groups":[{"guid":"g","members":null}],"npcs":[]}`, `{"groups":[{"guid":"g","members":[null]}],"npcs":[]}`, `{"groups":[{"guid":"g","members":[""]}],"npcs":[]}`, `{"groups":[{"guid":"","members":[]}],"npcs":[]}`} {
+		b := healthFixture(t, map[string]string{"/api/world": raw})
+		if _, _, e := b.squads(context.Background(), nil, squadQuery{}); e == nil {
+			t.Fatalf("accepted %s", raw)
+		}
+	}
+	b := healthFixture(t, map[string]string{"/api/world": `{"groups":[{"guid":"g","members":[]}],"npcs":[]}`})
+	_, out, e := b.squads(context.Background(), nil, squadQuery{})
+	if e != nil || out.RetrievedAt == "" || len(out.Groups) != 1 || out.Groups[0].TotalMembers != 0 {
+		t.Fatalf("%+v %v", out, e)
 	}
 }

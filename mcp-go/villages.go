@@ -19,16 +19,17 @@ type villageProgress struct {
 	Liberated  *bool    `json:"liberated"`
 }
 type villageOutput struct {
-	Source     string            `json:"source"`
-	SnapshotID *int64            `json:"snapshot_id"`
-	IngestedAt *string           `json:"ingested_at"`
-	State      string            `json:"state"`
-	Total      int               `json:"total"`
-	Matched    int               `json:"matched"`
-	Returned   int               `json:"returned"`
-	Truncated  int               `json:"truncated"`
-	Villages   []villageProgress `json:"villages"`
-	Note       string            `json:"note"`
+	Source      string            `json:"source"`
+	RetrievedAt string            `json:"retrieved_at"`
+	SnapshotID  *int64            `json:"snapshot_id"`
+	IngestedAt  *string           `json:"ingested_at"`
+	State       string            `json:"state"`
+	Total       int               `json:"total"`
+	Matched     int               `json:"matched"`
+	Returned    int               `json:"returned"`
+	Truncated   int               `json:"truncated"`
+	Villages    []villageProgress `json:"villages"`
+	Note        string            `json:"note"`
 }
 
 func registerVillageTools(s *mcp.Server, b *backend) {
@@ -57,6 +58,7 @@ func (b *backend) villageProgress(ctx context.Context, _ *mcp.CallToolRequest, q
 		return nil, o, fmt.Errorf("invalid village evidence")
 	}
 	o.SnapshotID = w.SnapshotID
+	o.RetrievedAt = raw.RetrievedAt
 	o.IngestedAt = w.IngestedAt
 	if w.Villages == nil {
 		o.State = "missing"

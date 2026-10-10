@@ -44,7 +44,7 @@ type gearOutput struct {
 	SnapshotID  *int                     `json:"snapshot_id"`
 	IngestedAt  *string                  `json:"ingested_at"`
 	Limit       int                      `json:"limit"`
-	HasReserves bool                     `json:"has_reserves"`
+	HasReserves *bool                    `json:"has_reserves"`
 	Craft       gearSection[gearCraft]   `json:"craft"`
 	Reequip     gearSection[gearReequip] `json:"reequip"`
 	Presets     gearSection[gearPreset]  `json:"presets"`
@@ -96,7 +96,7 @@ func (b *backend) gearPlan(ctx context.Context, _ *mcp.CallToolRequest, q gearQu
 			Members []struct{}        `json:"members"`
 			Picks   map[string]string `json:"picks"`
 		} `json:"presets"`
-		HasReserves bool `json:"has_reserves"`
+		HasReserves *bool `json:"has_reserves"`
 	}
 	if e = decodeEvidence(raw.Data, &d); e != nil {
 		return nil, o, e

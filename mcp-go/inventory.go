@@ -14,39 +14,39 @@ type inventoryQuery struct {
 	Limit       *int   `json:"limit,omitempty"`
 }
 type inventoryOutput struct {
-	Source      string             `json:"source"`
-	SnapshotID  *int               `json:"snapshot_id"`
-	IngestedAt  *string            `json:"ingested_at"`
-	RetrievedAt string             `json:"retrieved_at"`
-	Total       int                `json:"total"`
-	Matched     int                `json:"matched"`
-	Returned    int                `json:"returned"`
-	Truncated   int                `json:"truncated"`
-	Limit       int                `json:"limit"`
-	Containers  []map[string]any   `json:"containers"`
-	Storage     map[string]float64 `json:"storage"`
-	NPCCarried  map[string]float64 `json:"npc_carried"`
-	Equipped    map[string]int     `json:"equipped"`
-	Note        string             `json:"note"`
+	Source      string              `json:"source"`
+	SnapshotID  *int                `json:"snapshot_id"`
+	IngestedAt  *string             `json:"ingested_at"`
+	RetrievedAt string              `json:"retrieved_at"`
+	Total       int                 `json:"total"`
+	Matched     int                 `json:"matched"`
+	Returned    int                 `json:"returned"`
+	Truncated   int                 `json:"truncated"`
+	Limit       int                 `json:"limit"`
+	Containers  []map[string]any    `json:"containers"`
+	Storage     *map[string]float64 `json:"storage"`
+	NPCCarried  *map[string]float64 `json:"npc_carried"`
+	Equipped    *map[string]int     `json:"equipped"`
+	Note        string              `json:"note"`
 }
 
 func registerInventoryTools(s *mcp.Server, b *backend) {
 	mcp.AddTool(s, &mcp.Tool{Name: "locate_saved_inventory", Description: "Locate a required exact saved item class, optionally within one exact container ID. Optional exact faction filter. Returns bounded containers with saved quantities and positions; aggregate storage, NPC-carried and equipped scopes stay separate. Unknown ownership and position remain unknown. Limit defaults 25, maximum 100.", Annotations: &mcp.ToolAnnotations{ReadOnlyHint: true}}, b.inventory)
 }
-func inventoryQuantities(m map[string]float64, item string) (map[string]float64, error) {
+func inventoryQuantities(m map[string]*float64, item string) (*map[string]float64, error) {
 	if m == nil {
 		return nil, nil
 	}
 	out := map[string]float64{}
 	for k, v := range m {
-		if math.IsNaN(v) || math.IsInf(v, 0) || v < 0 {
+		if v == nil || math.IsNaN(*v) || math.IsInf(*v, 0) || *v < 0 {
 			return nil, fmt.Errorf("invalid item quantity")
 		}
 		if item == "" || k == item {
-			out[k] = v
+			out[k] = *v
 		}
 	}
-	return out, nil
+	return &out, nil
 }
 func (b *backend) inventory(ctx context.Context, _ *mcp.CallToolRequest, q inventoryQuery) (*mcp.CallToolResult, inventoryOutput, error) {
 	out := inventoryOutput{}
@@ -73,9 +73,9 @@ func (b *backend) inventory(ctx context.Context, _ *mcp.CallToolRequest, q inven
 		SnapshotID *int    `json:"snapshot_id"`
 		IngestedAt *string `json:"ingested_at"`
 		Storage    *struct {
-			Totals     map[string]float64 `json:"totals"`
-			Carried    map[string]float64 `json:"npc_carried"`
-			Containers []map[string]any   `json:"containers"`
+			Totals     map[string]*float64 `json:"totals"`
+			Carried    map[string]*float64 `json:"npc_carried"`
+			Containers []map[string]any    `json:"containers"`
 		} `json:"storage"`
 		NPCs []map[string]any `json:"npcs"`
 	}
@@ -95,7 +95,8 @@ func (b *backend) inventory(ctx context.Context, _ *mcp.CallToolRequest, q inven
 		return nil, inventoryOutput{}, err
 	}
 	if world.NPCs != nil {
-		out.Equipped = map[string]int{}
+		equipped := map[string]int{}
+		out.Equipped = &equipped
 		for _, n := range world.NPCs {
 			if n["is_player_npc"] != true {
 				continue
@@ -111,7 +112,7 @@ func (b *backend) inventory(ctx context.Context, _ *mcp.CallToolRequest, q inven
 					return nil, inventoryOutput{}, fmt.Errorf("invalid equipped evidence")
 				}
 				if item != "" && (q.Item == "" || q.Item == item) {
-					out.Equipped[item]++
+					(*out.Equipped)[item]++
 				}
 			}
 		}

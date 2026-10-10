@@ -8,6 +8,7 @@ import (
 
 type healthEvidence struct {
 	Source           string   `json:"source"`
+	RetrievedAt      *string  `json:"retrieved_at"`
 	Availability     string   `json:"availability"`
 	Freshness        string   `json:"freshness"`
 	SnapshotID       *int64   `json:"snapshot_id"`
@@ -53,6 +54,7 @@ func healthSummary(ctx context.Context, companion, live *backend) healthOutput {
 			if !ok {
 				return
 			}
+			h.RetrievedAt = &raw.RetrievedAt
 			h.Availability = "available"
 			switch source {
 			case "companion_save":
@@ -101,6 +103,8 @@ func healthSummary(ctx context.Context, companion, live *backend) healthOutput {
 						h.CapturedAt = capture.At
 						h.SessionID = capture.Session
 					}
+				} else {
+					h.Availability = "unavailable"
 				}
 			case "ue4ss_live":
 				d, ok := m["status"].(map[string]any)

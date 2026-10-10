@@ -1,0 +1,152 @@
+{
+  "/api/world": {
+    "snapshot_id": 7,
+    "ingested_at": "2026-10-10T12:00:00Z",
+    "npcs": [
+      {
+        "guid": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "first_name": "Ada",
+        "last_name": "Smith",
+        "is_player_npc": true,
+        "skills": {
+          "craft": {
+            "level": 4,
+            "xp": 0,
+            "cap": 10
+          }
+        },
+        "injuries": [],
+        "housed": null,
+        "morale": null,
+        "equipment": {
+          "weapon": "Iron_C"
+        },
+        "job_priorities": {
+          "crafting": 1
+        }
+      }
+    ],
+    "storage": {
+      "totals": {
+        "Iron_C": 3
+      },
+      "npc_carried": {
+        "Iron_C": 2
+      },
+      "containers": [
+        {
+          "id": "chest-a",
+          "name": "Chest",
+          "cls": "SharedChest_C",
+          "faction": null,
+          "position": null,
+          "items": {
+            "Iron_C": 3
+          }
+        }
+      ]
+    },
+    "groups": [
+      {
+        "guid": "squad-a",
+        "name": "Guard",
+        "members": [
+          "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "missing-npc"
+        ]
+      }
+    ],
+    "villages": [
+      {
+        "name": "Village",
+        "trust": 12,
+        "trust_level": 1,
+        "prosperity": 30,
+        "liberated": false
+      }
+    ]
+  },
+  "/api/world/version": {
+    "snapshot_id": 7,
+    "ingested_at": "2026-10-10T12:00:00Z"
+  },
+  "/api/snapshots": [],
+  "/api/trends": {
+    "synthetic": true
+  },
+  "/api/telemetry/latest": {
+    "data": null
+  },
+  "/api/map": {
+    "status": {
+      "session_id": "synthetic-session",
+      "captured_at": "2026-10-10T11:00:00Z",
+      "age_seconds": 3600,
+      "stale": true,
+      "waiting_for_player": false
+    },
+    "points": []
+  },
+  "/api/resources": {
+    "schema": "bellwright.harvestable-baseline.v1",
+    "source_kind": "packaged_game_asset",
+    "nodes": [],
+    "unknowns": [
+      "Synthetic packaged evidence; availability unknown"
+    ]
+  },
+  "/api/placements": [],
+  "/api/gear": {
+    "snapshot_id": 7,
+    "ingested_at": "2026-10-10T12:00:00Z",
+    "craft": [
+      {
+        "item": "Iron_C",
+        "need": 4,
+        "equipped": 1,
+        "stored": 3,
+        "reserve": 1,
+        "target": 5,
+        "have": 4,
+        "deficit": 1
+      }
+    ],
+    "reequip": [],
+    "presets": [],
+    "has_reserves": true,
+    "kits_file": "private-path-must-not-leak"
+  },
+  "/api/trends/item": {
+    "name": "Iron_C",
+    "points": [
+      {
+        "snapshot_id": 6,
+        "ingested_at": "2026-10-10T11:00:00Z",
+        "playtime": 0,
+        "qty": 0,
+        "observed_playtime": null,
+        "observed_qty": null,
+        "save_name": "synthetic-save",
+        "region": "synthetic-region",
+        "character": "synthetic-character",
+        "map": "synthetic-map"
+      },
+      {
+        "snapshot_id": 7,
+        "ingested_at": "2026-10-10T12:00:00Z",
+        "playtime": 60,
+        "qty": 3,
+        "observed_playtime": 60,
+        "observed_qty": 3,
+        "save_name": "synthetic-save",
+        "region": "synthetic-region",
+        "character": "synthetic-character",
+        "map": "synthetic-map"
+      }
+    ],
+    "total_snapshots": 2,
+    "sampled_points": 2,
+    "stride": 1,
+    "sampled": false
+  }
+}

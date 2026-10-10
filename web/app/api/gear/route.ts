@@ -12,6 +12,7 @@ import path from 'node:path';
 import { desc } from 'drizzle-orm';
 import { db, snapshots } from '@/db';
 import type { GearPreset, Npc } from '@/lib/types';
+import { desiredGearItem, gearCoverage } from '@/lib/gear-planning';
 
 const DATA_DIR = process.env.DATA_DIR ?? path.join(process.cwd(), '.data');
 const KITS_FILE = process.env.KITS_FILE ?? path.join(DATA_DIR, 'kits.json');
@@ -82,8 +83,8 @@ export const GET = async () => {
       members.set(preset.key, [...(members.get(preset.key) ?? []), { guid: n.guid, name: npcName(n) }]);
       for (const [slot, cls] of Object.entries(presetPicks.get(preset.key) ?? {})) {
         const worn = n.equipment?.[WORN_SLOT[slot]] ?? null;
-        if (overridden(preset, slot, worn) || satisfied(preset, slot, worn, cls)) continue;
-        need[cls] = (need[cls] ?? 0) + 1;
+        const desired = desiredGearItem(preset, slot, worn, cls);
+        if (desired !== null) need[desired] = (need[desired] ?? 0) + 1;
       }
     } else {
       for (const cls of armory[n.guid ?? ''] ?? []) need[cls] = (need[cls] ?? 0) + 1;
@@ -94,13 +95,7 @@ export const GET = async () => {
   const itemCls = new Set([...Object.keys(need), ...Object.keys(reserves), ...Object.keys(equipped)]);
   const items = [...itemCls]
     .map(cls => {
-      const e = equipped[cls] ?? 0;
-      const target = Math.max(need[cls] ?? 0, e) + (reserves[cls] ?? 0);
-      const have = e + (stored[cls] ?? 0);
-      return {
-        item: cls, need: need[cls] ?? 0, equipped: e, stored: stored[cls] ?? 0,
-        reserve: reserves[cls] ?? 0, target, have, deficit: target - have,
-      };
+      return gearCoverage(cls, need[cls] ?? 0, equipped[cls] ?? 0, stored[cls] ?? 0, reserves[cls] ?? 0);
     })
     .filter(x => x.target > 0)
     .sort((a, b) => b.deficit - a.deficit || b.target - a.target);
@@ -137,6 +132,8 @@ export const GET = async () => {
 
   return Response.json(
     {
+      snapshot_id: latest.id,
+      ingested_at: latest.ingestedAt,
       presets: presets.map(p => ({
         key: p.key, name: p.name,
         members: members.get(p.key) ?? [],

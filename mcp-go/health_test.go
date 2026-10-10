@@ -70,3 +70,13 @@ func TestHealthMCP(t *testing.T) {
 		t.Fatalf("call: %v %v", r, e)
 	}
 }
+
+func TestHealthRejectsNonObjectTelemetry(t *testing.T) {
+	for _, value := range []string{`{"data":[]}`, `{"data":42}`, `{"data":"invalid"}`} {
+		b := healthFixture(t, map[string]string{"/api/telemetry/latest": value})
+		o := healthSummary(context.Background(), b, b)
+		if o.Sources[1].Availability != "unavailable" || o.Sources[1].Freshness != "unknown" {
+			t.Fatalf("malformed telemetry became available: %+v", o.Sources[1])
+		}
+	}
+}

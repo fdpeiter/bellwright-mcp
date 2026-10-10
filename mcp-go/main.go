@@ -70,7 +70,7 @@ func (b *backend) read(ctx context.Context, path, source, note string) (*mcp.Cal
 	return nil, output{source, time.Now().UTC().Format(time.RFC3339), decoded, note}, nil
 }
 func server(companion, live *backend) *mcp.Server {
-	s := mcp.NewServer(&mcp.Implementation{Name: "bellwright-steward-go", Version: "0.1.0"}, nil)
+	s := mcp.NewServer(&mcp.Implementation{Name: "bellwright-steward-go", Version: "0.2.0"}, nil)
 	specs := []struct {
 		name, path, source, note string
 		b                        *backend
@@ -89,6 +89,13 @@ func server(companion, live *backend) *mcp.Server {
 	}
 	mcp.AddTool(s, &mcp.Tool{Name: "read_resource_baseline", InputSchema: boundedInputSchema("category", 128), Description: "Bounded packaged nodes filtered by category and XY bounds/radius in engine units. Availability unknown; counts cover only the loaded baseline.", Annotations: &mcp.ToolAnnotations{ReadOnlyHint: true}}, live.resources)
 	mcp.AddTool(s, &mcp.Tool{Name: "read_foraging_candidates", InputSchema: boundedInputSchema("target_runtime_actor_id", 256), Description: "Bounded provisional placements filtered by target ID and practical-candidate XY bounds/radius in engine units. Coverage is not measured yield; availability/buildability unknown.", Annotations: &mcp.ToolAnnotations{ReadOnlyHint: true}}, live.placements)
+	registerGearTools(s, companion)
+	registerItemHistoryTools(s, companion)
+	registerVillagerTools(s, companion)
+	registerInventoryTools(s, companion)
+	registerSquadTools(s, companion)
+	registerVillageTools(s, companion)
+	registerHealthTools(s, companion, live)
 	return s
 }
 
