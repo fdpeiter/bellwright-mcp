@@ -14,10 +14,8 @@ jobs:
         with:
           node-version: 24
       - name: Validate host input diagnostics with synthetic fixtures
-        shell: pwsh
-        run: ./scripts/preflight.tests.ps1
+        run: pwsh -NoProfile -File scripts/preflight.tests.ps1
       - name: Validate service classifications and private-output suppression
         run: node --test scripts/check-services.test.mjs
       - name: Validate synthetic owner Compose config and startup failure gate
-        shell: pwsh
-        run: ./scripts/preflight-compose.tests.ps1
+        run: pwsh -NoProfile -File scripts/preflight-compose.tests.ps1
