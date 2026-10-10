@@ -3,6 +3,14 @@ import { SKILLS, playerPeople, nameOf, evidence, extractionBuildings, shortlist,
 export async function render(ctx) {
   const u = ctx.ui;
   const root = u.el('div', { className: 'workforce-feature' }, u.heading('Who could gather here?', 'Compare saved evidence for an extractor. Skills and condition indicate suitability; present assignment and available work time remain unknown.'));
+  async function refreshEvidence(button, params=ctx.params) {
+    button.disabled=true; root.setAttribute('aria-busy','true');
+    try {
+      await ctx.loadTool('read_saved_world', {}, {refresh:true});
+      const updated=await render({...ctx,params}); root.replaceWith(updated);
+      const heading=updated.querySelector('h1'); heading?.setAttribute('tabindex','-1');heading?.focus();
+    } finally { root.removeAttribute('aria-busy');button.disabled=false; }
+  }
   root.append(u.el('style', {}, '.workforce-feature .candidate-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:16px}.workforce-feature .candidate-list article{margin:0}.workforce-feature .detail-title:focus{outline:3px solid var(--accent);outline-offset:4px}'));
   if (!ctx.tools.some(t => (typeof t === 'string' ? t : t.name) === 'read_saved_world')) {
     root.append(u.empty('Saved villager evidence unavailable', 'The connected service does not expose read_saved_world.', u.link('Check source health', 'workspace')));
@@ -10,7 +18,7 @@ export async function render(ctx) {
   }
   const result = await ctx.loadTool('read_saved_world', {});
   if (!result?.data) {
-    root.append(u.notice(result?.error || 'Saved evidence could not be loaded.', 'error'), u.button('Retry saved evidence', async () => { await ctx.loadTool('read_saved_world', {}, { refresh: true }); root.replaceWith(await render(ctx)); }), u.link('Check source health', 'workspace'));
+    root.append(u.notice(result?.error || 'Saved evidence could not be loaded.', 'error'), u.button('Retry saved evidence', e => refreshEvidence(e.currentTarget)), u.link('Check source health', 'workspace'));
     return root;
   }
   if (result.status === 'stale') root.append(u.notice('Saved evidence retained after a failed refresh. ' + (result.error || ''), 'error'));
@@ -21,6 +29,7 @@ export async function render(ctx) {
   let selected = ctx.params.get('person') || '';
   let skill = Object.hasOwn(SKILLS, ctx.params.get('skill')) ? ctx.params.get('skill') : 'harvest';
   let query = '';
+  const returnLink=u.link('Return to location planning','plan',Object.fromEntries(ctx.params));
   const select = (values, value, onChange) => { const control = u.el('select', { onChange }, values.map(([id,text]) => u.el('option', { value:id },text))); control.value=value; return control; };
   const titleOf = b => b.name || b.cls + ' · ' + b.id;
   const buildingControl = select([['','Choose a saved extractor'], ...buildings.map(b => [b.id,titleOf(b)])], buildings.some(b => b.id === buildingID) ? buildingID : '', e => { buildingID = e.target.value; selected=''; draw(); });
@@ -73,10 +82,11 @@ export async function render(ctx) {
   }
   function draw() {
     const building=buildings.find(b => b.id===buildingID);
+    returnLink.setAttribute('href', '#plan?' + new URLSearchParams({...Object.fromEntries(ctx.params),building:buildingID}));
     status.replaceChildren(u.notice(building ? `Planning for ${titleOf(building)}. Known saved skill is evidence, not actual assignment.` : 'Select an extractor to enable a staffing proposal. Saved workforce evidence remains available.'));
     drawCandidates(); drawDetail(); drawProposal();
   }
   draw();
-  root.append(u.el('section',{className:'panel'},u.el('h2',{},'Source and context'),u.el('dl',{},u.el('dt',{},'Snapshot'),u.el('dd',{},fmt(world.snapshot_id)),u.el('dt',{},'Save capture time'),u.el('dd',{},fmt(world.captured_at || world.meta?.captured_at)),u.el('dt',{},'Ingested time'),u.el('dd',{},fmt(world.ingested_at))),u.source(result),u.button('Refresh saved evidence',async() => { await ctx.loadTool('read_saved_world', {}, {refresh:true}); root.replaceWith(await render({...ctx,params:new URLSearchParams({...Object.fromEntries(ctx.params),building:buildingID,person:selected,skill})})); }),u.link('Return to location planning','plan',Object.fromEntries(ctx.params))));
+  root.append(u.el('section',{className:'panel'},u.el('h2',{},'Source and context'),u.el('dl',{},u.el('dt',{},'Snapshot'),u.el('dd',{},fmt(world.snapshot_id)),u.el('dt',{},'Save capture time'),u.el('dd',{},fmt(world.captured_at || world.meta?.captured_at)),u.el('dt',{},'Ingested time'),u.el('dd',{},fmt(world.ingested_at))),u.source(result),u.button('Refresh saved evidence',e => refreshEvidence(e.currentTarget,new URLSearchParams({...Object.fromEntries(ctx.params),building:buildingID,person:selected,skill}))),returnLink));
   return root;
 }

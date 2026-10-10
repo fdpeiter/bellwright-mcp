@@ -3,13 +3,21 @@ import { playerContainers, quantity, resources, label, containerName, coordinate
 export async function render(ctx) {
   const u=ctx.ui;
   const root=u.el('div',{className:'supplies-feature'},u.heading('Where is this resource stored?','Find saved stock in explicit Player containers, then inspect the storage evidence. Quantities are saved inventory, not production or delivery.'));
+  async function refreshEvidence(button,params=ctx.params) {
+    button.disabled=true;root.setAttribute('aria-busy','true');
+    try {
+      await ctx.loadTool('read_saved_world',{}, {refresh:true});
+      const updated=await render({...ctx,params});root.replaceWith(updated);
+      const heading=updated.querySelector('h1');heading?.setAttribute('tabindex','-1');heading?.focus();
+    } finally {root.removeAttribute('aria-busy');button.disabled=false;}
+  }
   root.append(u.el('style',{},'.supplies-feature .distribution-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:16px}.supplies-feature .distribution-list article{margin:0}.supplies-feature .storage-title:focus{outline:3px solid var(--accent);outline-offset:4px}.supplies-feature .item-id{overflow-wrap:anywhere}.supplies-feature .check-field{flex-direction:row;align-items:center}.supplies-feature .check-field input{min-height:24px;width:24px;height:24px}'));
   if(!ctx.tools.some(t => (typeof t==='string'?t:t.name)==='read_saved_world')) {
     root.append(u.empty('Saved container evidence unavailable','The connected service does not expose read_saved_world.',u.link('Check source health','workspace')));return root;
   }
   const result=await ctx.loadTool('read_saved_world',{});
   if(!result?.data) {
-    root.append(u.notice(result?.error || 'Saved evidence could not be loaded.','error'),u.button('Retry saved evidence',async()=>{await ctx.loadTool('read_saved_world',{}, {refresh:true});root.replaceWith(await render(ctx));}),u.link('Check source health','workspace'));return root;
+    root.append(u.notice(result?.error || 'Saved evidence could not be loaded.','error'),u.button('Retry saved evidence',e=>refreshEvidence(e.currentTarget)),u.link('Check source health','workspace'));return root;
   }
   if(result.status==='stale') root.append(u.notice('Saved stock retained after a failed refresh. '+(result.error||''),'error'));
   const world=result.data;
@@ -51,6 +59,6 @@ export async function render(ctx) {
   }
   function draw(){drawDistribution();drawDetail();}
   draw();
-  root.append(u.el('section',{className:'panel'},u.el('h2',{},'Source and context'),u.el('dl',{},u.el('dt',{},'Snapshot'),u.el('dd',{},u.value(world.snapshot_id)),u.el('dt',{},'Save capture time'),u.el('dd',{},u.value(world.captured_at||world.meta?.captured_at)),u.el('dt',{},'Ingested time'),u.el('dd',{},u.value(world.ingested_at))),u.source(result),u.button('Refresh saved stock',async()=>{await ctx.loadTool('read_saved_world',{}, {refresh:true});root.replaceWith(await render({...ctx,params:new URLSearchParams({...Object.fromEntries(ctx.params),item,container:selected})}));}),u.link('Return to location planning','plan',Object.fromEntries(ctx.params))));
+  root.append(u.el('section',{className:'panel'},u.el('h2',{},'Source and context'),u.el('dl',{},u.el('dt',{},'Snapshot'),u.el('dd',{},u.value(world.snapshot_id)),u.el('dt',{},'Save capture time'),u.el('dd',{},u.value(world.captured_at||world.meta?.captured_at)),u.el('dt',{},'Ingested time'),u.el('dd',{},u.value(world.ingested_at))),u.source(result),u.button('Refresh saved stock',e=>refreshEvidence(e.currentTarget,new URLSearchParams({...Object.fromEntries(ctx.params),item,container:selected}))),u.link('Return to location planning','plan',Object.fromEntries(ctx.params))));
   return root;
 }

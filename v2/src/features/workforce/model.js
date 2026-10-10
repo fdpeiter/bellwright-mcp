@@ -1,4 +1,7 @@
 export const SKILLS = { harvest: 'Harvesting', labour: 'Labour', strength: 'Strength' };
+// Save skill keys and game job category keys are different namespaces.
+// Labour/strength do not identify a single job, so no priority is inferred.
+const JOB_FOR_SKILL = { harvest: 'harvesting' };
 export function playerPeople(world) {
   return Array.isArray(world?.npcs) ? world.npcs.filter(p => p?.is_player_npc === true) : null;
 }
@@ -9,7 +12,7 @@ export function finite(value) { return typeof value === 'number' && Number.isFin
 export function evidence(person, skill) {
   const record = person?.skills?.[skill];
   return { level: finite(record?.level), cap: finite(record?.cap), morale: finite(person?.morale),
-    priority: finite(person?.job_priorities?.[skill]),
+    priority: JOB_FOR_SKILL[skill] ? finite(person?.job_priorities?.[JOB_FOR_SKILL[skill]]) : null,
     injuries: Array.isArray(person?.injuries) ? person.injuries : null,
     tools: person?.equipment && typeof person.equipment === 'object' ? Object.entries(person.equipment).filter(([slot, value]) => /tool|hand|weapon/.test(slot) && typeof value === 'string' && value) : null };
 }

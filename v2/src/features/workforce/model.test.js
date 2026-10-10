@@ -8,9 +8,16 @@ test('only explicit recruited Player people can enter a staffing proposal',()=>{
   assert.equal(proposalRecord(world.npcs[0],{id:'camp',faction:null},'harvest',1),null);
 });
 test('missing values never become zero, present zero stays known',()=>{
-  const v=evidence({skills:{harvest:{level:0}},morale:0,job_priorities:{harvest:0},injuries:[]},'harvest');
+  const v=evidence({skills:{harvest:{level:0}},morale:0,job_priorities:{harvesting:0},injuries:[]},'harvest');
   assert.equal(v.level,0);assert.equal(v.cap,null);assert.equal(v.morale,0);assert.equal(v.priority,0);assert.deepEqual(v.injuries,[]);
   assert.equal(evidence({},'harvest').injuries,null);assert.equal(evidence({},'harvest').tools,null);
+});
+test('skill evidence maps harvesting job explicitly and never guesses labour/strength priority',()=>{
+  const person={job_priorities:{harvest:9,harvesting:2,labour:3,strength:4}};
+  assert.equal(evidence(person,'harvest').priority,2);
+  assert.equal(evidence({job_priorities:{harvest:9}},'harvest').priority,null);
+  assert.equal(evidence(person,'labour').priority,null);
+  assert.equal(evidence(person,'strength').priority,null);
 });
 test('extraction shortlist sorts unknown last without assignment claims',()=>{
   const people=[{first_name:'Unknown'},{first_name:'Zero',skills:{harvest:{level:0}}},{first_name:'Known',skills:{harvest:{level:3}}}];
