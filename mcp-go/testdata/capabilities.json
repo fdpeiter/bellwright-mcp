@@ -26,6 +26,7 @@
         }
       }
     ],
+    "housing": {"quarters": 0, "houses": 0, "byType": []},
     "storage": {
       "totals": {
         "Iron_C": 3
@@ -90,7 +91,11 @@
   "/api/resources": {
     "schema": "bellwright.harvestable-baseline.v1",
     "source_kind": "packaged_game_asset",
-    "nodes": [],
+    "nodes": [
+      {"id":"synthetic-berry-a","baseline_category":"berries","class_asset_path":"synthetic-berry","position":[0,5,9]},
+      {"id":"synthetic-berry-b","baseline_category":"berries","class_asset_path":"synthetic-berry","position":[10,15,-1]},
+      {"id":"synthetic-mushroom","baseline_category":"mushrooms","class_asset_path":"synthetic-mushroom","position":[20,5,0]}
+    ],
     "unknowns": [
       "Synthetic packaged evidence; availability unknown"
     ]

@@ -40,6 +40,23 @@ game is running.
 - **Portraits** — generated avatars from each NPC's appearance data, or drop
   in real screenshots (see below)
 
+## MCP planning tools
+
+The Go MCP server exposes 20 read-only tools. The latest additions are:
+
+| Tool | Purpose |
+|---|---|
+| `rank_saved_workers` | Rank recruited workers by one exact observed skill, retaining ties |
+| `audit_saved_job_priorities` | Inspect saved priorities and potentially competing highest-priority jobs |
+| `read_saved_housing` | Report aggregate capacity separately from individual housing observations |
+| `compare_saved_stock_targets` | Compare per-call targets against one explicit inventory scope |
+| `search_observed_items` | Search item classes actually observed in saved inventory or equipment |
+| `summarize_resource_coverage` | Summarize loaded packaged resource categories and XYZ bounds |
+
+Limits default to 25 and cannot exceed 100. Worker ranking requires `skill`, for example `craft`. Stock comparison requires `targets`, for example `{"Iron_C":5}`, and `scope`: `stored`, `npc_carried` or `equipped`. Inventory scopes overlap and are never summed. Identifier formatting is not an official game-name lookup; resource counts do not establish current availability or production. Missing observations remain unknown.
+
+See [planning verification](docs/MCP-PLANNING-VERIFICATION.md) for synthetic checks and evidence limits.
+
 ## How it works
 
 ```
@@ -181,7 +198,7 @@ starter); counts are extra copies to keep in storage beyond assigned gear.
       an optional companion mod can stream real-time villager/player positions
       and village trust/prosperity (falls back to save data when idle)
 - [ ] Companion telemetry mod (Bellwright Modkit) to feed the endpoint
-- [ ] MCP server so AI assistants can query your settlement
+- [x] MCP server with 20 read-only settlement tools
 
 ## Contributing
 
