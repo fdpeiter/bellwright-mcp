@@ -4,7 +4,7 @@ export function el(tag, attrs = {}, ...children) {
     if (value === null || value === undefined || value === false) continue;
     if (key === 'className') node.className = value;
     else if (key.startsWith('on') && typeof value === 'function') node.addEventListener(key.slice(2).toLowerCase(), value);
-    else if (key === 'value') node.value = value;
+    else if (key === 'value') continue;
     else if (key === 'checked') node.checked = value;
     else node.setAttribute(key, value === true ? '' : String(value));
   }
@@ -12,6 +12,7 @@ export function el(tag, attrs = {}, ...children) {
     if (child === null || child === undefined || child === false) continue;
     node.append(child instanceof Node ? child : document.createTextNode(String(child)));
   }
+  if (attrs.value !== null && attrs.value !== undefined) node.value = attrs.value;
   return node;
 }
 export const button = (text, action, attrs = {}) => el('button', { type: 'button', onClick: action, ...attrs }, text);
