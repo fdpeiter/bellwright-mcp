@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Steward v2</title>
+  <link rel="stylesheet" href="/src/styles.css">
+  <script type="module" src="/src/app.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header">
+    <a class="wordmark" href="#plan" aria-label="Steward v2 home">STEWARD <span>/ v2</span></a>
+    <nav class="desktop-nav" aria-label="Main"><a href="#plan">Plan</a><a href="#workforce">Workforce</a><a href="#supplies">Supplies</a><a href="#journal">Journal</a></nav>
+    <label class="mobile-nav">Section<select id="section"><option value="plan">Plan</option><option value="workforce">Workforce</option><option value="supplies">Supplies</option><option value="journal">Journal</option><option value="workspace">Workspace</option></select></label>
+    <a class="workspace-link" href="#workspace">Source health</a>
+  </header>
+  <div class="source-context" id="source-context" role="status">Connecting to the read-only MCP service…</div>
+  <main id="main" tabindex="-1" aria-busy="true"></main>
+  <footer>Independent v2 frontend · Existing MCP/parser retain their upstream attribution · Game and saves are read-only.</footer>
+</body>
+</html>
