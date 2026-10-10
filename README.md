@@ -40,12 +40,17 @@ game is running.
 - **Portraits** — generated avatars from each NPC's appearance data, or drop
   in real screenshots (see below)
 
+## Stock target planner
+
+Open **Insights → Stock target planner**. It remembers planning inputs in this browser and recalculates suggested targets from fresh saved stock whenever the page reloads. Suggestions are read-only. See [calculation and evidence limits](docs/STOCK-RECOMMENDATIONS.md).
+
 ## MCP planning tools
 
-The Go MCP server exposes 20 read-only tools. The latest additions are:
+The Go MCP server exposes 21 read-only tools. The latest additions are:
 
 | Tool | Purpose |
 |---|---|
+| `recommend_stock_targets` | Calculate targets from explicit demand, replenishment and safety assumptions |
 | `rank_saved_workers` | Rank recruited workers by one exact observed skill, retaining ties |
 | `audit_saved_job_priorities` | Inspect saved priorities and potentially competing highest-priority jobs |
 | `read_saved_housing` | Report aggregate capacity separately from individual housing observations |
@@ -202,7 +207,7 @@ starter); counts are extra copies to keep in storage beyond assigned gear.
       an optional companion mod can stream real-time villager/player positions
       and village trust/prosperity (falls back to save data when idle)
 - [ ] Companion telemetry mod (Bellwright Modkit) to feed the endpoint
-- [x] MCP server with 20 read-only settlement tools
+- [x] MCP server with 21 read-only settlement tools
 
 ## Contributing
 
