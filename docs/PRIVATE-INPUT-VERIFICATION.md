@@ -26,3 +26,18 @@ Checks passed after continuation:
 - Full read-only preflight against the existing owner deployment: dashboard, prepared image, live feed, calibration, baseline and placements all passed. Configured save directory was empty, so new ingestion remains unverified.
 
 Remaining acceptance limitations: full successful startup-wrapper deployment on a new owner's machine, actual compatible save ingestion, lawful asset extraction and producer installation from independently obtained inputs, movement/menu/exit and reload-session lifecycle. Only the failure gate and existing-owner endpoints have been exercised; the complete build/start path of the new wrapper has not been run against the shared deployment. No private files/assets were added to Git.
+
+## Docker and extraction acceptance continuation
+
+This continuation on `codex/7-clean-owner-acceptance`, based on merged PR #48 (`11ff2a9`), supersedes the earlier empty-save and absent-extractor conclusions. Save discovery was incorrectly shallow; the publisher already recurses. Preflight now checks nested character saves. Actual deployment also exposed PowerShell scalar splatting of `--build`; the wrapper now splats a typed argument array, covered by deployment-free command regression tests.
+
+Checked with owner-authorized local inputs on 10 October 2026:
+
+- Built and started the source using the wrapper, a distinct Compose project, fresh data volume, relocated private input directories and random loopback port. Existing dependency/image caches were reused. The production project was untouched by this continuation.
+- All six endpoint checks passed. A compatible nested save was ingested: snapshots returned HTTP 200, one snapshot and an ingestion timestamp. The input save hash remained unchanged. Inspection confirmed all five private bind mounts read-only and the isolated database volume writable.
+- Built the isolated MCP image and called all 20 advertised tools successfully. The frozen private log correctly reported stale telemetry with zero invalid records; this is not a fresh-gameplay test.
+- Locked .NET restore and release build with warnings treated as errors passed with zero warnings. Go tests and vet passed, including BC1 palette/transparency/bounds and resource provenance/validation tests. PowerShell input/startup fixtures, Node classifications and synthetic Compose tests passed.
+- Extracted the owner's authorized map texture and package with compatible existing private mappings. The generated 8192-by-8192 PNG matched the earlier private image pixel-for-pixel (zero differing pixels). The generated baseline contained 89,830 packaged nodes with input hash and explicit unknowns. All endpoint checks passed again with regenerated images/baseline mounted in the isolated project.
+- Saves, logs, mappings, archives, raw exports, PNGs, provenance and diagnostic files remained ignored private inputs. No game/probe/UI source was changed.
+
+Remaining unverified: a second machine or installation without dependency caches; independent acquisition/compatibility of mappings and a pinned deployed live probe; parent transforms, streamed-world coverage, tree/ore nodes and actual runtime availability; independent map calibration; movement/menu/exit/reload lifecycle. The user explicitly deferred live-game acceptance to focus on Docker and extraction. Existing mappings and calibration were reused; calibration reuse was supported by pixel identity, not independently established. Keep #7 open for those remaining owner prerequisites and acceptance boundaries.

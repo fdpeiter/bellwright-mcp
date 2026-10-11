@@ -35,11 +35,16 @@ try {
     Check $envPath 1 @('UE4SS_LOG_DIR/UE4SS.log', '[WAITING_FOR_SAVE]')
     Set-Content -LiteralPath (Join-Path $fixture 'UE4SS_LOG_DIR with spaces/UE4SS.log') -Value 'synthetic presence fixture'
     Check $envPath 0 @('[INPUTS_PRESENT]', '[WAITING_FOR_SAVE]', '[DOCKER_UNCHECKED]')
+    $nested = Join-Path $fixture 'SAVE_DIR with spaces/character'
+    New-Item -ItemType Directory -Path $nested | Out-Null
+    Set-Content -LiteralPath (Join-Path $nested 'synthetic.sav') -Value 'synthetic presence fixture'
+    $output = & pwsh -NoProfile -File (Join-Path $PSScriptRoot 'preflight.ps1') -EnvFile $envPath -SkipDocker
+    if ($LASTEXITCODE -ne 0 -or ($output -join "`n").Contains('[WAITING_FOR_SAVE]')) { throw 'Nested save was not detected.' }
     $env:SAVE_DIR = 'relative/path'
     Check $envPath 1 @('SAVE_DIR must be a literal absolute host directory')
     $env:SAVE_DIR = 'C:drive-relative'
     Check $envPath 1 @('SAVE_DIR must be a literal absolute host directory')
-    Write-Output 'PASS: absent configuration, missing log, complete quoted paths, empty saves, environment precedence, drive-relative path rejection.'
+    Write-Output 'PASS: absent configuration, missing log, complete quoted paths, empty/nested saves, environment precedence, drive-relative path rejection.'
 } finally {
     foreach ($key in $keys) { [Environment]::SetEnvironmentVariable($key, $previous[$key]) }
     $resolved = [IO.Path]::GetFullPath($fixture)

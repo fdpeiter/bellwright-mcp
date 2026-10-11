@@ -8,7 +8,7 @@ Copy `.env.example` to `.env` and replace all four directories. Use literal abso
 
 | Setting | Required contents | Origin |
 | --- | --- | --- |
-| `SAVE_DIR` | Existing directory; `*.sav` needed for ingestion | Your own saves, normally `%LOCALAPPDATA%/Bellwright/Saved/SaveGames` |
+| `SAVE_DIR` | Existing directory; `*.sav` in this directory or nested character directories needed for ingestion | Your own saves, normally `%LOCALAPPDATA%/Bellwright/Saved/SaveGames` |
 | `UE4SS_LOG_DIR` | `UE4SS.log` | Actual log directory of your UE4SS installation |
 | `MAP_ASSETS_DIR` | `exports/Karvenia_08_map_overlay.png`, `exports/Karvenia_08_companion.png`, `karvenia-background.json` | Lawful extraction and calibration |
 | `RESOURCE_ANALYSIS_DIR` | `resource-baseline.json`, `foraging-placement-candidates.json` | Private packaged-node baseline and runtime placement analysis |
@@ -67,28 +67,15 @@ Synthetic heartbeat shape (not a probe or real capture):
 
 Reader bounds: last 4 MiB of log, complete lines up to 64 KiB, at most 256 actors. Feed becomes stale after 10 seconds; actor points after 45 seconds. Runtime actors do not establish recruitment/ownership. Acceptance needs two fresh changing player captures without saving, menu/exit checks, and a new reload session. Keep raw captures private.
 
-## Lawful extraction and remaining gaps
+## Lawful extraction
 
 Use only your own legally obtained game/official Modkit data where your license and applicable permissions allow local extraction. Do not bypass encryption/access controls, obtain unauthorized keys/assets or redistribute extracted assets. This setup provides no rights grant or third-party game-asset download.
 
-Included `tools/pakdump` is a CUE4Parse metadata/JSON inspector, **not a PNG/resource-baseline generator**. With .NET SDK and authorized compatible packages/mappings:
-
-```powershell
-dotnet run --project tools/pakdump -- 'C:/your/authorized/Paks' info
-dotnet run --project tools/pakdump -- 'C:/your/authorized/Paks' list Karvenia_08
-```
-
-Inspect source first: absent `OODLE`, it attempts the library's Oodle download; where appropriate supply a lawfully available compatible local library via `OODLE`. `USMAP` points to authorized mappings; `GAME` selects engine version (default `GAME_UE5_4` is not a compatibility guarantee). Record build, map, extractor/version/options and input hashes privately.
-
-Export `/Game/Mist/Maps/Karvenia/Karvenia_08/Karvenia_08_map_overlay` as 8192×8192 PNG using an authorized texture-capable tool. The texture exporter is not packaged. Generate the companion image with the included converter; PowerShell does not automatically load `.env`:
-
-```powershell
-go -C mcp-go run ./cmd/prepare-map -input 'C:/your/private/map-assets/exports/Karvenia_08_map_overlay.png' -output 'C:/your/private/map-assets/exports/Karvenia_08_companion.png'
-```
+The included [owner-local extraction pipeline](tools/asset-extract/README.md) builds with locked .NET dependencies, exports the authorized map texture/package, converts BC1 to PNG, prepares the companion image and generates the static resource baseline. Follow its commands with absolute private output paths and compatible lawfully obtained mappings. It supports the observed BC1 map format; unsupported formats fail. It does not acquire mappings or encryption keys. Record game build, package hashes and calibration evidence privately.
 
 Follow [map calibration](docs/MAP-BACKGROUND.md) for the companion's projection. Live-map's `karvenia-background.json` must supply PNG `width`/`height`, lowercase `sha256` matching the overlay image, `source_package`, nonempty `evidence`, and `projection_status`. Use `unverified` until independently calibrated; `verified` requires a finite nondegenerate six-number affine `matrix`. Do not copy the companion's matrix without verifying its coordinate frame. See `mcp-go/internal/livemap/background.go` and tests for exact validation.
 
-Consult `mcp-go/internal/livemap/resources.go` and tests for baseline/placement validation. Baseline has `schema: "bellwright.harvestable-baseline.v1"`, `source_kind: "packaged_game_asset"`, nodes with unique `id`, `baseline_category`, `class_asset_path`, three-number `position`, and nonempty `unknowns`. Placements are an array of `bellwright.foraging-placement-candidate.v1` entries with runtime target identity, assumed radius, current/practical sites and assumptions; `[]` truthfully means no placement evidence. Never fabricate identities or label packaged nodes as measured harvest availability. The full packaged-node extractor is absent; valid owner-generated inputs remain a prerequisite, not a solved extraction pipeline.
+Consult `mcp-go/internal/livemap/resources.go` and tests for baseline/placement validation. Baseline has `schema: "bellwright.harvestable-baseline.v1"`, `source_kind: "packaged_game_asset"`, nodes with unique `id`, `baseline_category`, `class_asset_path`, three-number `position`, and nonempty `unknowns`. Placements are an array of `bellwright.foraging-placement-candidate.v1` entries with runtime target identity, assumed radius, current/practical sites and assumptions; `[]` truthfully means no placement evidence. Never fabricate identities or label packaged nodes as measured harvest availability. The included extractor preserves observed component translations and explicitly leaves parent transforms, streamed-world coverage, tree/ore attackables and runtime availability unverified.
 
 Keep saves/logs/databases/mappings/packages and extracted images/JSON outside Git and Docker build contexts. Ignored `private/`, `map-assets/`, `resource-analysis/`, `saves/`, `logs/` are local-data conventions; never force-add inputs. Review staged filenames before committing. `.env.example` contains placeholders only. Synthetic checks cannot prove actual extraction, producer compatibility or a fresh gameplay session.
 
@@ -96,8 +83,11 @@ Keep saves/logs/databases/mappings/packages and extracted images/JSON outside Gi
 
 ```powershell
 pwsh -File scripts/preflight.tests.ps1
+pwsh -File scripts/start-local.tests.ps1
 node --test scripts/check-services.test.mjs
 pwsh -File scripts/preflight-compose.tests.ps1
 ```
 
 The last check needs Docker CLI/Compose. It resolves an isolated synthetic owner configuration and verifies missing inputs stop the startup gate without deploying containers. Node tests verify classifications and that private bodies/errors are suppressed; PowerShell fixtures test presence/path parsing, not real asset content.
+
+For an isolated deployment, use `-ProjectName owner-test` with both scripts and set `COMPANION_PORT=0` in its private env file for a random loopback port. Pass that same project and env file to every Compose command and MCP connection. The default project remains `bellwright`. The publisher recursively discovers character saves. Only remove volumes belonging to a disposable test project; preserve the normal settlement volume.
