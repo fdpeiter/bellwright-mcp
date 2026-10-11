@@ -80,7 +80,11 @@ return function()
  if ok and out.available then
   local dir=debug.getinfo(1,'S').source:match('^@(.+[/\\])')
   local sok,storage=pcall(function()return dofile(dir..'storage.lua')(helpers.GetPlayer())end)
-  if sok then out.storage=storage else out.storage_status='read_failed' end
+  if sok then
+   out.storage=storage
+   local observed,trace=pcall(function()return dofile(dir..'observe.lua')()end)
+   if observed then out.storage.transfer_observer=trace else out.storage.observer_status='unavailable' end
+  else out.storage_status='read_failed' end
  end
  if not ok then out={source='ue4ss_live',session_id=session,captured_at=os.date('!%Y-%m-%dT%H:%M:%SZ'),available=false,status='read_failed',read_error=tostring(out):sub(1,512),write_available=false} end
  local line=json(out)

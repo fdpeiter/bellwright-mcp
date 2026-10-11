@@ -12,7 +12,7 @@ result with `-log <private UE4SS.log path>`. The caller configures this path;
 tools accept no arbitrary URLs, filenames, function names or properties.
 Keep the log and any game type mappings/debug symbols outside Git.
 
-Install `mod/StewardFood/Scripts/main.lua`, `sample.lua` and `storage.lua` as a complete batch
+Install `mod/StewardFood/Scripts/main.lua`, `sample.lua`, `storage.lua` and `observe.lua` as a complete batch
 in an enabled `StewardFood/Scripts` mod directory. Initially reload Lua mods
 with Ctrl+R. The stable loader owns one game-thread timer and checks its fixed
 `sample.lua` file every ten seconds. Valid reader edits automatically replace
@@ -180,3 +180,22 @@ Representing the nested item as a fully explicit Lua table might avoid the
 identified userdata branch, but has not been tested and is not a safe bypass.
 Direct Count assignments, spawning/removing items and save editing are not
 acceptable storage-transfer implementations.
+
+## Passive transfer observer
+
+`observe.lua` only registers after a fixed `storage-observe.arm` marker in its
+own script directory is consumed. It is inactive on normal startup and never
+automatically re-arms. One observer is retained across sampler reloads. It reads
+at most six game-generated ServerMove requests within ten minutes, then removes
+the hook on a sampler tick. It copies only explicit scalar fields and object
+names during the callback; no Unreal parameter or item pointers are retained.
+The callback never calls a setter, invokes a transfer, overrides a return value
+or replays a request. Records are under `data.storage.transfer_observer` and
+are requests, not verified completions.
+
+The installed source's LocalUnrealParam getter uses `Operation::Get`, which
+constructs a native struct wrapper; it does not enter the defective setter
+conversion. Observer tests verify inactive startup, single registration,
+unchanged parameters, copied values and expiry/unregistration. Runtime hook
+registration and populated MCP schema were checked; actual operation semantics
+still depend on capturing a normal manual transfer.
