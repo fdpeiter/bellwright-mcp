@@ -89,3 +89,33 @@ calls are included. No food target has been changed by this implementation.
 Tracked in issue #60. This extension is a separately reviewable first step while
 the active shared MCP/probe has other uncommitted work; it must not overwrite
 those files when integrated.
+# Storage transfer investigation (issue #62)
+
+The separate `read_live_storage_state` tool returns storage observations under
+`data.storage`, together with the same live provenance, session and freshness
+checks. It discovers nearby loaded stockpiles and chests independently of food
+workstations, retaining faction and settlement references, empty slots, access
+flags and exact item custom values. Nearby storage may belong to another faction
+or have unknown ownership; discovery does not authorize transfers.
+
+Bounds: 2,048 components examined, 16 storage buildings returned, 128 slots per
+container, and up to eight existing-item capacity checks per container. Native
+`IsFull`, `GetEmptySlotCount` and `HasSpaceForItems(item, 1)` calls were observed
+working in the running game. An empty slot and `InitialCapacity` are insufficient
+to infer free volume in dynamically sized stockpiles. Capacity checks preserve
+false and zero values and report unavailable methods separately. Output budget
+trimming is explicit.
+
+The shipped symbols identify reflected `ServerMove(source, target, operationID)`
+and mapped inventory-operation structs, but this does not prove the installed
+Lua bridge can marshal those structs safely. A separately approved, single-use
+one-item transfer test on 2026-10-11 exited Bellwright with an access violation
+and repeated UE4SS stack frames before returning from the RPC. No resulting
+inventory change or conservation could be verified. The test hook and arm file
+were removed and the installed sampler restored to read-only behavior. The
+experiment is not included in this repository or any MCP tool.
+
+**Automatic transfers remain unavailable.** A compatible, verified struct-call
+bridge and successful independent source/destination conservation checks are
+required before exposing writes. No raw game logs, symbols, private coordinates,
+saves or extracted mappings are committed.
