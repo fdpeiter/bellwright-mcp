@@ -12,7 +12,7 @@ result with `-log <private UE4SS.log path>`. The caller configures this path;
 tools accept no arbitrary URLs, filenames, function names or properties.
 Keep the log and any game type mappings/debug symbols outside Git.
 
-Install `mod/StewardFood/Scripts/main.lua`, `sample.lua`, `storage.lua` and `observe.lua` as a complete batch
+Install `mod/StewardFood/Scripts/main.lua`, `sample.lua`, `storage.lua`, `observe.lua` and `widgets.lua` as a complete batch
 in an enabled `StewardFood/Scripts` mod directory. Initially reload Lua mods
 with Ctrl+R. The stable loader owns one game-thread timer and checks its fixed
 `sample.lua` file every ten seconds. Valid reader edits automatically replace
@@ -199,3 +199,30 @@ conversion. Observer tests verify inactive startup, single registration,
 unchanged parameters, copied values and expiry/unregistration. Runtime hook
 registration and populated MCP schema were checked; actual operation semantics
 still depend on capturing a normal manual transfer.
+
+Follow-up: a manual stockpile-to-player-to-stockpile transfer completed while
+the ServerMove observer was active, with no observed request. Thus registration
+alone is not proof that this hook covers host inventory actions. Native symbols
+also identify an unreflected `Move(source, target, params)` entry point. A local
+host path bypassing the reflected RPC is a candidate explanation, not a proven
+call graph. Do not ask for repeated transfers against the same silent hook.
+
+`widgets.lua` reads Source/Target structs already generated for loaded stone
+slot widgets, bounded to 2,048 examined widgets and 16 records. It reports widget
+state, not execution or completion. Widgets were initially observed with INVALID
+operation types; these must not be treated as usable transfer payloads. Opening
+a physical stockpile populated the same warehouse-screen widget with valid
+slot-operation state. Its class name alone does not distinguish management
+display from physical inventory interaction. No native struct is retained or
+modified.
+
+In the open physical stockpile, a stone widget exposed source and target mode
+`ContainerSlot` (3), container references and native slot index 10. Independent
+container inspection found the same item and count at Lua slot 11, establishing
+the zero-based/native versus one-based/Lua relationship for this observed slot.
+The source had no Actor or Item.Template reference, NumItems -1 and OriginCount
+1, while the stack count was 2. Thus the earlier Container-mode request with an
+actor, nested native item and OriginCount equal to a summed item count did not
+match this observed UI source. These are widget defaults, not the final gesture
+request: quantity modifiers, OriginCount handling, target selection, operation
+ID and completion semantics remain unverified. No replacement RPC was invoked.

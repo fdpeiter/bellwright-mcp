@@ -84,6 +84,8 @@ return function()
    out.storage=storage
    local observed,trace=pcall(function()return dofile(dir..'observe.lua')()end)
    if observed then out.storage.transfer_observer=trace else out.storage.observer_status='unavailable' end
+   local wok,widgets=pcall(function()return dofile(dir..'widgets.lua')()end)
+   if wok then out.storage.operation_widgets=widgets end
   else out.storage_status='read_failed' end
  end
  if not ok then out={source='ue4ss_live',session_id=session,captured_at=os.date('!%Y-%m-%dT%H:%M:%SZ'),available=false,status='read_failed',read_error=tostring(out):sub(1,512),write_available=false} end
