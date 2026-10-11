@@ -12,7 +12,7 @@ result with `-log <private UE4SS.log path>`. The caller configures this path;
 tools accept no arbitrary URLs, filenames, function names or properties.
 Keep the log and any game type mappings/debug symbols outside Git.
 
-Install `mod/StewardFood/Scripts/main.lua` and `sample.lua` as a complete batch
+Install `mod/StewardFood/Scripts/main.lua`, `sample.lua` and `storage.lua` as a complete batch
 in an enabled `StewardFood/Scripts` mod directory. Initially reload Lua mods
 with Ctrl+R. The stable loader owns one game-thread timer and checks its fixed
 `sample.lua` file every ten seconds. Valid reader edits automatically replace
@@ -119,3 +119,64 @@ experiment is not included in this repository or any MCP tool.
 bridge and successful independent source/destination conservation checks are
 required before exposing writes. No raw game logs, symbols, private coordinates,
 saves or extracted mappings are committed.
+
+## Offline diagnosis of the storage crash
+
+The installed revision is `5e627997`. In its
+[struct handler](https://github.com/UE4SS-RE/RE-UE4SS/blob/5e627997/UE4SS/src/LuaType/LuaUObject.cpp#L753),
+`push_structproperty` checks userdata at `params.stored_at_index` but retrieves
+`UScriptStruct` with no index argument. The
+[wrapper defaults](https://github.com/UE4SS-RE/RE-UE4SS/blob/5e627997/deps/first/LuaMadeSimple/include/LuaMadeSimple/LuaMadeSimple.hpp#L749)
+that retrieval to stack position 1. Nested fields use position -1.
+
+The test source was a Lua table containing a native `MistItem` userdata in its
+`Item` field. During nested conversion, the correct item is on top of the stack
+while position 1 still contains the outer source table. This is a concrete
+index mismatch, not a guessed memory offset. The wrapper also obtains a userdata
+tag without checking that it is present: a failed integer conversion becomes
+zero, which matches `LuaOwnedStackObject`, before a pointer is dereferenced.
+[Lua's conversion rules](https://www.lua.org/manual/5.4/manual.html#lua_tointegerx)
+explain why this can turn a type mismatch into a native null-pointer access.
+This path is a strong crash-cause candidate; the unsymbolized crash stack does
+not conclusively identify the exact instruction. Lua `pcall` is not protection
+against native access violations.
+
+The mapped source and target structs were independently rechecked against the
+installed mapping. Source has Type, Actor, Container, SlotIndex, NumItems,
+OriginCount and nested MistItem. Target has Type, Actor, Container and SlotIndex.
+Mapping establishes field types, not behavioral semantics: container mode,
+OriginCount, slot indices, access checks and operation IDs still need evidence
+from a normal game-generated transfer. The same omitted index was also present
+in upstream main when inspected on 2026-10-10; an update alone is not a verified
+remedy.
+
+`node mod/StewardFood/audit_bridge.mjs <source-directory>` reproduces the source
+audit without contacting the game. Supply the official LuaUObject.cpp,
+LuaMadeSimple.hpp and LuaMadeSimple.cpp from the exact runtime revision. Its
+output explicitly does not certify native runtime compatibility.
+
+The next validation sequence is:
+
+1. Observe one ordinary transfer made through the game's UI using a passive
+   native-function hook, with bounded field reads and no parameter writes,
+   overrides, retained parameter pointers or replay. Verify the hook's struct
+   getter path in source before installing it. This establishes real operation
+   semantics and completion behavior.
+2. Correct and test the native struct handler outside the game, including
+   nested userdata, wrong-type rejection, stack balance and missing tags.
+   The candidate handler correction passes `params.stored_at_index` to
+   `get_userdata<UScriptStruct>`; robust userdata-tag validation is also needed.
+   A compatible typed native bridge is an alternative. Neither is installed.
+3. Validate a harmless non-mutating call with the same operation-struct shapes
+   and inspect actual function metadata. Existing item capacity calls exercise
+   a simple direct struct argument, not the failed nested struct path.
+4. Only after those checks, run a single non-food transfer against explicit
+   current ownership, capacity and count expectations. Verify source decrease,
+   destination increase, preserved item/custom values and conserved totals.
+   Stop on stale capture, rejected RPC, lost session or missing receipt; never
+   automatically retry an uncertain operation.
+
+Representing the nested item as a fully explicit Lua table might avoid the
+identified userdata branch, but has not been tested and is not a safe bypass.
+Direct Count assignments, spawning/removing items and save editing are not
+acceptable storage-transfer implementations.
