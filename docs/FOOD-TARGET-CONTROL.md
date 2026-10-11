@@ -1,0 +1,91 @@
+# Live food MCP extension
+
+This first implementation adds `read_live_food_state`, an isolated stdio MCP
+extension backed only by `StewardFood` runtime observations. It does not write
+game settings or saves. The inherited Bellwright Companion code and license
+remain attributed; Bellwright game content belongs to Donkey Crew. No UI is changed.
+
+## Build and connect
+
+From `mcp-go`, run `go build -o food-control ./cmd/food-control`. Start the
+result with `-log <private UE4SS.log path>`. The caller configures this path;
+tools accept no arbitrary URLs, filenames, function names or properties.
+Keep the log and any game type mappings/debug symbols outside Git.
+
+Install `mod/StewardFood/Scripts/main.lua` and `sample.lua` as a complete batch
+in an enabled `StewardFood/Scripts` mod directory. Initially reload Lua mods
+with Ctrl+R. The stable loader owns one game-thread timer and checks its fixed
+`sample.lua` file every ten seconds. Valid reader edits automatically replace
+the sampling function; no additional timers are registered. Compile/load errors
+produce an unavailable result rather than presenting the old reader as updated.
+Changes to the loader itself still require a normal UE4SS reload.
+
+UE4SS's installed build registers filesystem-watch directories at program
+startup. A mod added while the game is running can be loaded by Ctrl+R but
+remain absent from that existing watcher. The module loader avoids repeatedly
+asking for global reloads while developing the food reader. See the
+[official implementation](https://github.com/UE4SS-RE/RE-UE4SS/blob/5e627997/UE4SS/src/UE4SSProgram.cpp).
+
+## Evidence and bounds
+
+The probe samples seven explicit food-related building classes within 50,000
+engine units of the player, treating 500m as unverified. Each class discovery
+is capped at 64 objects; orders and storage rules at 32 entries. It reads
+settlements referenced by those structures and keeps observed residence distinct
+from recruitment and faction references distinct from verified ownership.
+
+Building container slots are selected through actual structure-settlement
+references, separately from carried inventories. Container discovery examines
+at most 2,048 loaded components and exports at most 32 containers with 64 slots
+each. These are bounded observations, not a complete settlement stock census.
+Storage Min/Max rules are distinct from production orders. A failed map iteration
+is labelled `partial_map_read`; its observed entries are not a complete target list.
+
+Records are limited to 60,000 bytes. Budget trimming explicitly reports omission
+and per-domain truncation. The MCP reader scans only the last 8MiB of the private
+log, rejects invalid provenance and future captures, and marks observations over
+20 seconds old unavailable. Menu observations replace the previous world data.
+The MCP always forces `write_available=false`, even if a log claims otherwise.
+
+## Runtime validation on 10 October 2026
+
+The isolated MCP stdio smoke returned fresh, available observations from the
+loaded game: 13 food-related structures, one linked settlement, seven NPC
+resident records, and building storage slots containing actual food quantities.
+This is live evidence, independent of saved snapshots. Full runtime identifiers,
+coordinates, inventory contents and raw logs are kept private.
+
+Automatic reader reload was verified by a harmless comment edit: the loader
+reported `reader_loaded`, the reader session changed, and subsequent MCP
+observations remained fresh without another keypress or game restart.
+
+Go tests and vet, populated MCP output-schema checks, Lua reader tests, Lua reload
+tests and actual stdio MCP smoke are required. Tests cover stale/menu transitions,
+invalid provenance/future timestamps, missing fields, bounded nearby selection,
+automatic replacement without extra timers and invalid replacement source.
+
+## Write stage remains incomplete
+
+The game's shipped symbols identify these real reflected broker RPCs:
+
+- `ServerSetHarvestingOrderAmount(building GUID, order GUID, integer amount)`
+- `ServerSetCraftingOrderAmount(building GUID, order GUID, integer amount)`
+- `ServerSetInfiniteCraftingAmount(building GUID, item template, integer amount)`
+
+Symbol names alone do not validate the running object's identity or authorize
+guessing parameter values. The current reflected harvesting orders expose item
+references but not their native GUID/target fields. Cooking-map iteration also
+fails partway in the installed Lua runtime. The reflection iterator diagnostics
+were removed after demonstrating incompatibility; they do not run in this probe.
+
+Before exposing a writer, obtain verified current building/order GUIDs, complete
+target mode/amount evidence and the player's ownership/authority relation. Use
+the real RPC with a food-only item allowlist, bounded caps, current session and
+capture checks, and an explicit expected old value. Apply one change, then
+independently reread it and retain the previous value for rollback. No guessed
+memory offsets, save editing, arbitrary reflection commands or unverified setter
+calls are included. No food target has been changed by this implementation.
+
+Tracked in issue #60. This extension is a separately reviewable first step while
+the active shared MCP/probe has other uncommitted work; it must not overwrite
+those files when integrated.
