@@ -14,4 +14,8 @@ try{
  const r=await call('tools/call',{name:tool.name,arguments:{}});if(r.error||r.result.isError)throw Error(JSON.stringify(r));
  const s=r.result.structuredContent;if(!s||s.source!=='ue4ss_live'||s.write_available!==false)throw Error('Invalid live provenance or write gate');
  console.log(JSON.stringify({tool:tool.name,schema:true,source:s.source,status:s.status,available:s.available,stale:s.stale,age_seconds:s.age_seconds,write_available:s.write_available,buildings:s.data?.buildings?.length,settlements:s.data?.settlements?.length}));
+ const storage=list.result.tools.find(t=>t.name==='read_live_storage_state');if(!storage?.outputSchema||!storage.annotations?.readOnlyHint)throw Error('Missing storage read schema');
+ const sr=await call('tools/call',{name:storage.name,arguments:{}});if(sr.error||sr.result.isError)throw Error(JSON.stringify(sr));
+ const st=sr.result.structuredContent;if(st.write_available!==false)throw Error('Storage writes must remain disabled');
+ console.log(JSON.stringify({tool:storage.name,schema:true,status:st.status,available:st.available,stale:st.stale,containers:st.data?.storage?.containers?.length,write_available:st.write_available}));
 }finally{clearTimeout(timeout);proc.stdin.end();proc.kill();}

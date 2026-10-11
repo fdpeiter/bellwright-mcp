@@ -14,7 +14,7 @@ func TestToolSchema(t *testing.T) {
 	ctx := context.Background()
 	a, b := mcp.NewInMemoryTransports()
 	path := filepath.Join(t.TempDir(), "runtime.log")
-	line := fmt.Sprintf(`BWFOOD {"source":"ue4ss_live","session_id":"schema-test","captured_at":%q,"available":true,"status":"observed","buildings":[{"orders":[],"orders_status":{"available":true}}],"settlements":[{"residents":[]}],"containers":[{"slots":[{"item":"Mushroom_C","quantity":2}]}]}`, time.Now().UTC().Format(time.RFC3339))
+	line := fmt.Sprintf(`BWFOOD {"source":"ue4ss_live","session_id":"schema-test","captured_at":%q,"available":true,"status":"observed","buildings":[{"orders":[],"orders_status":{"available":true}}],"settlements":[{"residents":[]}],"containers":[{"slots":[{"item":"Mushroom_C","quantity":2}]}],"storage":{"write_available":false,"containers":[{"slots":[{"quantity":3}],"native_capacity":{"full":false,"empty_slots":0}}]}}`, time.Now().UTC().Format(time.RFC3339))
 	if err := os.WriteFile(path, []byte(line), 0600); err != nil {
 		t.Fatal(err)
 	}
@@ -32,11 +32,15 @@ func TestToolSchema(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(list.Tools) != 1 || list.Tools[0].Name != "read_live_food_state" || list.Tools[0].OutputSchema == nil || !list.Tools[0].Annotations.ReadOnlyHint {
+	if len(list.Tools) != 2 || list.Tools[0].OutputSchema == nil || !list.Tools[0].Annotations.ReadOnlyHint {
 		t.Fatalf("unexpected tool schema: %#v", list)
 	}
 	result, err := c.CallTool(ctx, &mcp.CallToolParams{Name: "read_live_food_state", Arguments: map[string]any{}})
 	if err != nil || result.IsError {
 		t.Fatalf("populated schema call failed: %#v %v", result, err)
+	}
+	result, err = c.CallTool(ctx, &mcp.CallToolParams{Name: "read_live_storage_state", Arguments: map[string]any{}})
+	if err != nil || result.IsError {
+		t.Fatalf("storage schema call failed: %#v %v", result, err)
 	}
 }

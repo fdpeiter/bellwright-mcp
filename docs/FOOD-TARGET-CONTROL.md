@@ -12,7 +12,7 @@ result with `-log <private UE4SS.log path>`. The caller configures this path;
 tools accept no arbitrary URLs, filenames, function names or properties.
 Keep the log and any game type mappings/debug symbols outside Git.
 
-Install `mod/StewardFood/Scripts/main.lua` and `sample.lua` as a complete batch
+Install `mod/StewardFood/Scripts/main.lua`, `sample.lua`, `storage.lua`, `observe.lua` and `widgets.lua` as a complete batch
 in an enabled `StewardFood/Scripts` mod directory. Initially reload Lua mods
 with Ctrl+R. The stable loader owns one game-thread timer and checks its fixed
 `sample.lua` file every ten seconds. Valid reader edits automatically replace
@@ -89,3 +89,140 @@ calls are included. No food target has been changed by this implementation.
 Tracked in issue #60. This extension is a separately reviewable first step while
 the active shared MCP/probe has other uncommitted work; it must not overwrite
 those files when integrated.
+# Storage transfer investigation (issue #62)
+
+The separate `read_live_storage_state` tool returns storage observations under
+`data.storage`, together with the same live provenance, session and freshness
+checks. It discovers nearby loaded stockpiles and chests independently of food
+workstations, retaining faction and settlement references, empty slots, access
+flags and exact item custom values. Nearby storage may belong to another faction
+or have unknown ownership; discovery does not authorize transfers.
+
+Bounds: 2,048 components examined, 16 storage buildings returned, 128 slots per
+container, and up to eight existing-item capacity checks per container. Native
+`IsFull`, `GetEmptySlotCount` and `HasSpaceForItems(item, 1)` calls were observed
+working in the running game. An empty slot and `InitialCapacity` are insufficient
+to infer free volume in dynamically sized stockpiles. Capacity checks preserve
+false and zero values and report unavailable methods separately. Output budget
+trimming is explicit.
+
+The shipped symbols identify reflected `ServerMove(source, target, operationID)`
+and mapped inventory-operation structs, but this does not prove the installed
+Lua bridge can marshal those structs safely. A separately approved, single-use
+one-item transfer test on 2026-10-11 exited Bellwright with an access violation
+and repeated UE4SS stack frames before returning from the RPC. No resulting
+inventory change or conservation could be verified. The test hook and arm file
+were removed and the installed sampler restored to read-only behavior. The
+experiment is not included in this repository or any MCP tool.
+
+**Automatic transfers remain unavailable.** A compatible, verified struct-call
+bridge and successful independent source/destination conservation checks are
+required before exposing writes. No raw game logs, symbols, private coordinates,
+saves or extracted mappings are committed.
+
+## Offline diagnosis of the storage crash
+
+The installed revision is `5e627997`. In its
+[struct handler](https://github.com/UE4SS-RE/RE-UE4SS/blob/5e627997/UE4SS/src/LuaType/LuaUObject.cpp#L753),
+`push_structproperty` checks userdata at `params.stored_at_index` but retrieves
+`UScriptStruct` with no index argument. The
+[wrapper defaults](https://github.com/UE4SS-RE/RE-UE4SS/blob/5e627997/deps/first/LuaMadeSimple/include/LuaMadeSimple/LuaMadeSimple.hpp#L749)
+that retrieval to stack position 1. Nested fields use position -1.
+
+The test source was a Lua table containing a native `MistItem` userdata in its
+`Item` field. During nested conversion, the correct item is on top of the stack
+while position 1 still contains the outer source table. This is a concrete
+index mismatch, not a guessed memory offset. The wrapper also obtains a userdata
+tag without checking that it is present: a failed integer conversion becomes
+zero, which matches `LuaOwnedStackObject`, before a pointer is dereferenced.
+[Lua's conversion rules](https://www.lua.org/manual/5.4/manual.html#lua_tointegerx)
+explain why this can turn a type mismatch into a native null-pointer access.
+This path is a strong crash-cause candidate; the unsymbolized crash stack does
+not conclusively identify the exact instruction. Lua `pcall` is not protection
+against native access violations.
+
+The mapped source and target structs were independently rechecked against the
+installed mapping. Source has Type, Actor, Container, SlotIndex, NumItems,
+OriginCount and nested MistItem. Target has Type, Actor, Container and SlotIndex.
+Mapping establishes field types, not behavioral semantics: container mode,
+OriginCount, slot indices, access checks and operation IDs still need evidence
+from a normal game-generated transfer. The same omitted index was also present
+in upstream main when inspected on 2026-10-10; an update alone is not a verified
+remedy.
+
+`node mod/StewardFood/audit_bridge.mjs <source-directory>` reproduces the source
+audit without contacting the game. Supply the official LuaUObject.cpp,
+LuaMadeSimple.hpp and LuaMadeSimple.cpp from the exact runtime revision. Its
+output explicitly does not certify native runtime compatibility.
+
+The next validation sequence is:
+
+1. Observe one ordinary transfer made through the game's UI using a passive
+   native-function hook, with bounded field reads and no parameter writes,
+   overrides, retained parameter pointers or replay. Verify the hook's struct
+   getter path in source before installing it. This establishes real operation
+   semantics and completion behavior.
+2. Correct and test the native struct handler outside the game, including
+   nested userdata, wrong-type rejection, stack balance and missing tags.
+   The candidate handler correction passes `params.stored_at_index` to
+   `get_userdata<UScriptStruct>`; robust userdata-tag validation is also needed.
+   A compatible typed native bridge is an alternative. Neither is installed.
+3. Validate a harmless non-mutating call with the same operation-struct shapes
+   and inspect actual function metadata. Existing item capacity calls exercise
+   a simple direct struct argument, not the failed nested struct path.
+4. Only after those checks, run a single non-food transfer against explicit
+   current ownership, capacity and count expectations. Verify source decrease,
+   destination increase, preserved item/custom values and conserved totals.
+   Stop on stale capture, rejected RPC, lost session or missing receipt; never
+   automatically retry an uncertain operation.
+
+Representing the nested item as a fully explicit Lua table might avoid the
+identified userdata branch, but has not been tested and is not a safe bypass.
+Direct Count assignments, spawning/removing items and save editing are not
+acceptable storage-transfer implementations.
+
+## Passive transfer observer
+
+`observe.lua` only registers after a fixed `storage-observe.arm` marker in its
+own script directory is consumed. It is inactive on normal startup and never
+automatically re-arms. One observer is retained across sampler reloads. It reads
+at most six game-generated ServerMove requests within one hour, then removes
+the hook on a sampler tick. It copies only explicit scalar fields and object
+names during the callback; no Unreal parameter or item pointers are retained.
+The callback never calls a setter, invokes a transfer, overrides a return value
+or replays a request. Records are under `data.storage.transfer_observer` and
+are requests, not verified completions.
+
+The installed source's LocalUnrealParam getter uses `Operation::Get`, which
+constructs a native struct wrapper; it does not enter the defective setter
+conversion. Observer tests verify inactive startup, single registration,
+unchanged parameters, copied values and expiry/unregistration. Runtime hook
+registration and populated MCP schema were checked; actual operation semantics
+still depend on capturing a normal manual transfer.
+
+Follow-up: a manual stockpile-to-player-to-stockpile transfer completed while
+the ServerMove observer was active, with no observed request. Thus registration
+alone is not proof that this hook covers host inventory actions. Native symbols
+also identify an unreflected `Move(source, target, params)` entry point. A local
+host path bypassing the reflected RPC is a candidate explanation, not a proven
+call graph. Do not ask for repeated transfers against the same silent hook.
+
+`widgets.lua` reads Source/Target structs already generated for loaded stone
+slot widgets, bounded to 2,048 examined widgets and 16 records. It reports widget
+state, not execution or completion. Widgets were initially observed with INVALID
+operation types; these must not be treated as usable transfer payloads. Opening
+a physical stockpile populated the same warehouse-screen widget with valid
+slot-operation state. Its class name alone does not distinguish management
+display from physical inventory interaction. No native struct is retained or
+modified.
+
+In the open physical stockpile, a stone widget exposed source and target mode
+`ContainerSlot` (3), container references and native slot index 10. Independent
+container inspection found the same item and count at Lua slot 11, establishing
+the zero-based/native versus one-based/Lua relationship for this observed slot.
+The source had no Actor or Item.Template reference, NumItems -1 and OriginCount
+1, while the stack count was 2. Thus the earlier Container-mode request with an
+actor, nested native item and OriginCount equal to a summed item count did not
+match this observed UI source. These are widget defaults, not the final gesture
+request: quantity modifiers, OriginCount handling, target selection, operation
+ID and completion semantics remain unverified. No replacement RPC was invoked.

@@ -31,6 +31,7 @@ type Observation struct {
 	Discovery          []map[string]any `json:"discovery"`
 	Scope              string           `json:"scope"`
 	BudgetTruncated    bool             `json:"budget_truncated"`
+	Storage            map[string]any   `json:"storage,omitempty"`
 }
 
 type Result struct {

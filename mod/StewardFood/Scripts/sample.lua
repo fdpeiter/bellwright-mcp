@@ -77,6 +77,17 @@ local function sample()
 end
 return function()
  local ok,out=pcall(sample)
+ if ok and out.available then
+  local dir=debug.getinfo(1,'S').source:match('^@(.+[/\\])')
+  local sok,storage=pcall(function()return dofile(dir..'storage.lua')(helpers.GetPlayer())end)
+  if sok then
+   out.storage=storage
+   local observed,trace=pcall(function()return dofile(dir..'observe.lua')()end)
+   if observed then out.storage.transfer_observer=trace else out.storage.observer_status='unavailable' end
+   local wok,widgets=pcall(function()return dofile(dir..'widgets.lua')()end)
+   if wok then out.storage.operation_widgets=widgets end
+  else out.storage_status='read_failed' end
+ end
  if not ok then out={source='ue4ss_live',session_id=session,captured_at=os.date('!%Y-%m-%dT%H:%M:%SZ'),available=false,status='read_failed',read_error=tostring(out):sub(1,512),write_available=false} end
  local line=json(out)
  if #line>60000 then
@@ -84,6 +95,7 @@ return function()
   for _,s in ipairs(out.settlements or {}) do s.structures=nil;if s.structures_status then s.structures_status.truncated=true end end
   line=json(out)
   while #line>60000 and out.containers and #out.containers>0 do table.remove(out.containers);out.container_discovery.truncated=true;line=json(out) end
+  while #line>60000 and out.storage and #out.storage.containers>0 do table.remove(out.storage.containers);out.storage.discovery.truncated=true;line=json(out) end
  end
  if #line>60000 then return json({source='ue4ss_live',session_id=session,captured_at=out.captured_at,available=false,status='budget_exceeded',write_available=false}) end
  return line

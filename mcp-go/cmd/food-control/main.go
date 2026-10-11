@@ -18,6 +18,15 @@ func newServer(path string) *mcp.Server {
 		v, e := foodcontrol.Read(path, time.Now().UTC())
 		return nil, v, e
 	})
+	mcp.AddTool(s, &mcp.Tool{Name: "read_live_storage_state", Description: "Read bounded live stockpile and chest inventories, settlement faction references, native capacity checks and access flags. Nearby containers can belong to other factions or have unknown ownership. No saved-data fallback or transfers.", Annotations: &mcp.ToolAnnotations{ReadOnlyHint: true}}, func(ctx context.Context, _ *mcp.CallToolRequest, _ input) (*mcp.CallToolResult, foodcontrol.Result, error) {
+		v, e := foodcontrol.Read(path, time.Now().UTC())
+		v.Note = "Live storage observations are in data.storage. Faction references and access flags do not alone prove transfer authorization; capacity checks sample existing items. Transfers remain disabled."
+		if v.Available && (v.Data == nil || v.Data.Storage == nil) {
+			v.Available = false
+			v.Status = "storage_unavailable"
+		}
+		return nil, v, e
+	})
 	return s
 }
 func main() {
