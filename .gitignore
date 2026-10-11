@@ -25,6 +25,8 @@ logs/
 *.uexp
 *.ubulk
 *.usmap
+*.bc1
+*.lic
 web/public/map/
 
 mcp-go/*.exe

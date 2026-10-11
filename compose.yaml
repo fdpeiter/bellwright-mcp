@@ -3,7 +3,7 @@ services:
   companion:
     build: .
     ports:
-      - "127.0.0.1:8710:8710"
+      - "127.0.0.1:${COMPANION_PORT:-8710}:8710"
     volumes:
       - companion-data:/data
       - type: bind

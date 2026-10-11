@@ -2,6 +2,7 @@
 [CmdletBinding()]
 param(
     [string]$EnvFile = (Join-Path $PSScriptRoot '../.env'),
+    [ValidatePattern('^[a-z0-9][a-z0-9_-]*$')][string]$ProjectName = 'bellwright',
     [switch]$SkipDocker
 )
 $ErrorActionPreference = 'Stop'
@@ -41,7 +42,7 @@ foreach ($key in ($requirements.Keys | Sort-Object)) {
             Report 'MISSING_INPUT' "$key/$file absent or inaccessible."; $failed = $true
         }
     }
-    if ($key -eq 'SAVE_DIR' -and !(Get-ChildItem -LiteralPath $value -Filter '*.sav' -File | Select-Object -First 1)) {
+    if ($key -eq 'SAVE_DIR' -and !(Get-ChildItem -LiteralPath $value -Filter '*.sav' -File -Recurse | Select-Object -First 1)) {
         Report 'WAITING_FOR_SAVE' 'Save directory exists but contains no .sav; publisher cannot ingest yet.'
     }
 }
@@ -61,11 +62,11 @@ if ($LASTEXITCODE -ne 0 -or $os -ne 'linux') {
     Report 'DOCKER_UNAVAILABLE' 'Start Docker Desktop in Linux-container mode.'; exit 2
 }
 $repo = Split-Path $PSScriptRoot -Parent
-& docker compose --project-directory $repo --env-file $EnvFile config --quiet 2>$null
+& docker compose --project-directory $repo --env-file $EnvFile -p $ProjectName config --quiet 2>$null
 if ($LASTEXITCODE -ne 0) { Report 'COMPOSE_INVALID' 'Compose configuration invalid; check .env and compose.yaml.'; exit 2 }
 # Check live-map from inside companion because port 18126 is intentionally not published.
 # Emit only classifications, never response bodies or private coordinates/IDs.
 $check = (Get-Content -LiteralPath (Join-Path $PSScriptRoot 'check-services.mjs') -Raw) + "`nprocess.exitCode = await checkServices();"
-& docker compose --project-directory $repo --env-file $EnvFile exec -T companion node --input-type=module -e $check 2>$null
+& docker compose --project-directory $repo --env-file $EnvFile -p $ProjectName exec -T companion node --input-type=module -e $check 2>$null
 if ($LASTEXITCODE -ne 0) { Report 'SERVICES_UNVERIFIED' 'Start services or repair dependent network attachment; see DOCKER-LOCAL.md.'; exit 2 }
 exit 0

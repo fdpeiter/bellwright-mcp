@@ -24,6 +24,8 @@ logs
 **/*.uexp
 **/*.ubulk
 **/*.usmap
+**/*.bc1
+**/*.lic
 
 .env
 .env.*
