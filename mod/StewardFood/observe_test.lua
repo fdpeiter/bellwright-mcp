@@ -18,6 +18,7 @@ local state=observe();assert(#state.events==1 and state.events[1].source.slot_in
 assert(source.NumItems==1 and source.OriginCount==4 and target.SlotIndex==-1)
 assert(state.events[1].completion_verified==false and state.write_available==false)
 source.NumItems=99;assert(state.events[1].source.num_items==1) -- copied, not retained
-clock=701;assert(observe().status=='finished' and removed==1)
+clock=3701;assert(observe().status=='finished' and removed==1)
 callback(param(object('Context')),param(source),param(target),param(13));assert(#observe().events==1)
+armed=true;assert(observe().status=='observing' and registrations==2 and #observe().events==0)
 print('Passive storage observer tests passed')

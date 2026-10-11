@@ -10,13 +10,18 @@ local function fields(o)
 end
 return function()
  local s=rawget(_G,key)
+ if s and s.status=='finished' and not s.pre then
+  local dir=debug.getinfo(1,'S').source:match('^@(.+[/\\])')
+  local arm=dir and io.open(dir..'storage-observe.arm','rb')
+  if arm then arm:close();s=nil end
+ end
  if not s then
   local dir=debug.getinfo(1,'S').source:match('^@(.+[/\\])')
   local arm=dir and io.open(dir..'storage-observe.arm','rb')
   if not arm then return {status='inactive',write_available=false} end
   arm:close()
   if not os.remove(dir..'storage-observe.arm') then return {status='arm_unavailable',write_available=false} end
-  s={status='unavailable',events=setmetatable({},{array=true}),deadline=os.time()+600};rawset(_G,key,s)
+  s={status='unavailable',events=setmetatable({},{array=true}),deadline=os.time()+3600};rawset(_G,key,s)
   local ok,f=pcall(function()return StaticFindObject(path)end)
   if ok and f and f:IsValid() and type(RegisterHook)=='function' then
    local registered,pre,post=pcall(RegisterHook,path,function(context,source,target,operation)

@@ -186,7 +186,7 @@ acceptable storage-transfer implementations.
 `observe.lua` only registers after a fixed `storage-observe.arm` marker in its
 own script directory is consumed. It is inactive on normal startup and never
 automatically re-arms. One observer is retained across sampler reloads. It reads
-at most six game-generated ServerMove requests within ten minutes, then removes
+at most six game-generated ServerMove requests within one hour, then removes
 the hook on a sampler tick. It copies only explicit scalar fields and object
 names during the callback; no Unreal parameter or item pointers are retained.
 The callback never calls a setter, invokes a transfer, overrides a return value
